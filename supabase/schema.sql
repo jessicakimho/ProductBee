@@ -58,23 +58,47 @@ CREATE INDEX IF NOT EXISTS idx_feedback_project_id ON feedback(project_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_feature_id ON feedback(feature_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
 
--- Enable real-time for tables (requires Supabase Realtime to be enabled)
--- Note: You may need to enable Realtime in your Supabase project settings
-ALTER PUBLICATION supabase_realtime ADD TABLE projects;
-ALTER PUBLICATION supabase_realtime ADD TABLE features;
-ALTER PUBLICATION supabase_realtime ADD TABLE feedback;
+-- Enable real-time for tables (optional - only if you want real-time features)
+-- This checks if the publication exists and if tables are already added
+DO $$
+BEGIN
+  -- Check if supabase_realtime publication exists
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    -- Add tables to realtime publication if not already added
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase_realtime' AND tablename = 'projects'
+    ) THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE projects;
+    END IF;
+    
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase_realtime' AND tablename = 'features'
+    ) THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE features;
+    END IF;
+    
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables 
+      WHERE pubname = 'supabase_realtime' AND tablename = 'feedback'
+    ) THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE feedback;
+    END IF;
+  END IF;
+END $$;
 
 -- Row Level Security (RLS) Policies
 -- Note: Since we're using Auth0, we'll disable RLS for now and handle authorization in the API layer
 -- You can enable RLS later if you migrate to Supabase Auth or implement custom JWT verification
-
 -- For now, disable RLS to allow API access (authorization handled in Next.js API routes)
+
 ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
 ALTER TABLE features DISABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback DISABLE ROW LEVEL SECURITY;
 
--- If you want to enable RLS later with Auth0 integration, you would need to:
+-- Note: If you want to enable RLS later with Auth0 integration, you would need to:
 -- 1. Create a function to verify Auth0 JWT tokens
 -- 2. Create policies that check user roles from the users table
 -- 3. Use service role key in API routes for authenticated operations
