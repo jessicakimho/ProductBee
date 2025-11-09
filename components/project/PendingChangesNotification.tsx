@@ -18,7 +18,7 @@ export default function PendingChangesNotification({
   return (
     <button
       onClick={onClick}
-      className="relative inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+      className="relative inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#404040] bg-white border border-[#d9d9d9] rounded-full hover:bg-[#f5f5f5] transition-colors shadow-soft"
       title={`${count} pending status change${count !== 1 ? 's' : ''}`}
     >
       <Bell className="w-4 h-4" />

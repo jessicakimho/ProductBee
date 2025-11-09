@@ -103,15 +103,15 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Stories</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-[#0d0d0d]">User Stories</h2>
+          <p className="text-sm text-[#404040] mt-1">
             Define user personas and link them to tickets for better alignment
           </p>
         </div>
         {canEdit && (
           <button
             onClick={() => setIsFormOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
           >
             <Plus className="w-5 h-5" />
             Create User Story
@@ -121,11 +121,11 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+        <div className="bg-red-50 border border-red-200 rounded-card p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-red-800 dark:text-red-200">Error</p>
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-sm font-medium text-red-800">Error</p>
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         </div>
       )}
@@ -133,23 +133,23 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
       {/* Loading State */}
       {isLoading && userStories.length === 0 && (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-500 dark:text-gray-400 mt-4">Loading user stories...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#a855f7] mx-auto"></div>
+          <p className="text-[#404040] mt-4">Loading user stories...</p>
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && userStories.length === 0 && !error && (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <Sparkles className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No user stories yet</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <div className="text-center py-12 bg-white rounded-card shadow-soft border border-[#d9d9d9]">
+          <Sparkles className="w-12 h-12 text-[#404040] mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[#0d0d0d] mb-2">No user stories yet</h3>
+          <p className="text-sm text-[#404040] mb-4">
             Create user stories to define personas and link them to tickets
           </p>
           {canEdit && (
             <button
               onClick={() => setIsFormOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
             >
               <Plus className="w-5 h-5" />
               Create Your First User Story

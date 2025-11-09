@@ -121,14 +121,14 @@ export default function UserStoryForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+      <div className="bg-white rounded-card shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-[#d9d9d9] px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-[#0d0d0d]">
             {userStory ? 'Edit User Story' : 'Create User Story'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-[#404040] hover:text-[#0d0d0d] transition-colors"
             disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
@@ -138,7 +138,7 @@ export default function UserStoryForm({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Name Field */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-[#404040] mb-2">
               Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -146,7 +146,7 @@ export default function UserStoryForm({
               id="name"
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="As a customer"
               required
               disabled={isSubmitting}
@@ -155,7 +155,7 @@ export default function UserStoryForm({
 
           {/* Role Field */}
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="role" className="block text-sm font-medium text-[#404040] mb-2">
               Role <span className="text-red-500">*</span>
             </label>
             <input
@@ -163,7 +163,7 @@ export default function UserStoryForm({
               id="role"
               value={formData.role}
               onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="I want to reset my password"
               required
               disabled={isSubmitting}
@@ -172,14 +172,14 @@ export default function UserStoryForm({
 
           {/* Goal Field */}
           <div>
-            <label htmlFor="goal" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="goal" className="block text-sm font-medium text-[#404040] mb-2">
               Goal <span className="text-red-500">*</span>
             </label>
             <textarea
               id="goal"
               value={formData.goal}
               onChange={(e) => setFormData((prev) => ({ ...prev, goal: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="So that I can regain access to my account"
               rows={3}
               required
@@ -189,14 +189,14 @@ export default function UserStoryForm({
 
           {/* Benefit Field */}
           <div>
-            <label htmlFor="benefit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="benefit" className="block text-sm font-medium text-[#404040] mb-2">
               Benefit <span className="text-red-500">*</span>
             </label>
             <textarea
               id="benefit"
               value={formData.benefit}
               onChange={(e) => setFormData((prev) => ({ ...prev, benefit: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="Reduces support tickets and improves user experience"
               rows={3}
               required
@@ -205,13 +205,13 @@ export default function UserStoryForm({
           </div>
 
           {/* Demographics Section */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Demographics (Optional)</h3>
+          <div className="border-t border-[#d9d9d9] pt-6">
+            <h3 className="text-lg font-medium text-[#0d0d0d] mb-4">Demographics (Optional)</h3>
             <div className="space-y-4">
               <div>
                 <label
                   htmlFor="age"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[#404040] mb-2"
                 >
                   Age
                 </label>
@@ -220,7 +220,7 @@ export default function UserStoryForm({
                   id="age"
                   value={formData.demographics.age || ''}
                   onChange={(e) => handleDemographicsChange('age', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
                   placeholder="25-45"
                   disabled={isSubmitting}
                 />
@@ -229,7 +229,7 @@ export default function UserStoryForm({
               <div>
                 <label
                   htmlFor="location"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[#404040] mb-2"
                 >
                   Location
                 </label>
@@ -238,7 +238,7 @@ export default function UserStoryForm({
                   id="location"
                   value={formData.demographics.location || ''}
                   onChange={(e) => handleDemographicsChange('location', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
                   placeholder="North America"
                   disabled={isSubmitting}
                 />
@@ -247,7 +247,7 @@ export default function UserStoryForm({
               <div>
                 <label
                   htmlFor="technical_skill"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[#404040] mb-2"
                 >
                   Technical Skill
                 </label>
@@ -256,7 +256,7 @@ export default function UserStoryForm({
                   id="technical_skill"
                   value={formData.demographics.technical_skill || ''}
                   onChange={(e) => handleDemographicsChange('technical_skill', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
                   placeholder="intermediate"
                   disabled={isSubmitting}
                 />
@@ -265,18 +265,18 @@ export default function UserStoryForm({
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-end gap-4 pt-4 border-t border-[#d9d9d9]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="px-4 py-2 text-[#404040] hover:bg-[#f5f5f5] rounded-full transition-colors"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-soft"
               disabled={isSubmitting || !formData.name.trim() || !formData.role.trim() || !formData.goal.trim() || !formData.benefit.trim()}
             >
               {isSubmitting ? 'Saving...' : userStory ? 'Update' : 'Create'}

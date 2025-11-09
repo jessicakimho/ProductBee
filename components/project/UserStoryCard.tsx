@@ -32,12 +32,12 @@ export default function UserStoryCard({
   const availableTickets = allTickets.filter((ticket) => !linkedTicketIds.includes(ticket.id) && !linkedTicketIds.includes(ticket._id))
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-card shadow-soft p-6 border border-[#d9d9d9] hover:shadow-lg transition-all">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{userStory.name}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-semibold text-[#0d0d0d] mb-1">{userStory.name}</h3>
+          <p className="text-sm text-[#404040]">
             Created by {userStory.createdBy?.name || 'Unknown'} • {new Date(userStory.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -45,14 +45,14 @@ export default function UserStoryCard({
           <div className="flex items-center gap-2">
             <button
               onClick={onEdit}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 text-[#404040] hover:text-[#a855f7] hover:bg-[#f5f5f5] rounded-lg transition-colors"
               title="Edit user story"
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={onDelete}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 text-[#404040] hover:text-red-600 hover:bg-[#f5f5f5] rounded-lg transition-colors"
               disabled={isDeleting}
               title="Delete user story"
             >
@@ -65,39 +65,39 @@ export default function UserStoryCard({
       {/* User Story Content */}
       <div className="space-y-3 mb-4">
         <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</p>
-          <p className="text-gray-900 dark:text-white">{userStory.role}</p>
+          <p className="text-sm font-medium text-[#404040] mb-1">Role</p>
+          <p className="text-[#0d0d0d]">{userStory.role}</p>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Goal</p>
-          <p className="text-gray-900 dark:text-white">{userStory.goal}</p>
+          <p className="text-sm font-medium text-[#404040] mb-1">Goal</p>
+          <p className="text-[#0d0d0d]">{userStory.goal}</p>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Benefit</p>
-          <p className="text-gray-900 dark:text-white">{userStory.benefit}</p>
+          <p className="text-sm font-medium text-[#404040] mb-1">Benefit</p>
+          <p className="text-[#0d0d0d]">{userStory.benefit}</p>
         </div>
       </div>
 
       {/* Demographics */}
       {userStory.demographics && Object.keys(userStory.demographics).length > 0 && (
-        <div className="mb-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+        <div className="mb-4 pt-4 border-t border-[#d9d9d9]">
+          <p className="text-sm font-medium text-[#404040] mb-2 flex items-center gap-2">
             <User className="w-4 h-4" />
             Demographics
           </p>
           <div className="flex flex-wrap gap-2">
             {userStory.demographics.age && (
-              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-sm">
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                 Age: {userStory.demographics.age}
               </span>
             )}
             {userStory.demographics.location && (
-              <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-sm">
+              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
                 Location: {userStory.demographics.location}
               </span>
             )}
             {userStory.demographics.technical_skill && (
-              <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-sm">
+              <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
                 Skill: {userStory.demographics.technical_skill}
               </span>
             )}
@@ -106,9 +106,9 @@ export default function UserStoryCard({
       )}
 
       {/* Linked Tickets */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="pt-4 border-t border-[#d9d9d9]">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <p className="text-sm font-medium text-[#404040] flex items-center gap-2">
             <Link2 className="w-4 h-4" />
             Linked Tickets ({linkedTickets.length})
           </p>
@@ -121,7 +121,7 @@ export default function UserStoryCard({
                 }
               }}
               disabled={isLinking}
-              className="text-sm px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="text-sm px-3 py-1 border border-[#d9d9d9] rounded-full bg-white text-[#0d0d0d] focus:ring-2 focus:ring-[#a855f7] focus:border-transparent"
             >
               <option value="">Link Ticket</option>
               {availableTickets.map((ticket) => (
@@ -138,13 +138,13 @@ export default function UserStoryCard({
             {linkedTickets.map((ticket) => (
               <div
                 key={ticket.id || ticket._id}
-                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                className="flex items-center justify-between p-2 bg-[#f5f5f5] rounded-card-inner"
               >
-                <span className="text-sm text-gray-900 dark:text-white">{ticket.title}</span>
+                <span className="text-sm text-[#0d0d0d]">{ticket.title}</span>
                 {canEdit && (
                   <button
                     onClick={() => onUnlinkTicket(ticket.id || ticket._id)}
-                    className="p-1 text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded transition-colors"
+                    className="p-1 text-[#404040] hover:text-red-600 rounded transition-colors"
                     disabled={isLinking}
                     title="Unlink ticket"
                   >
@@ -155,7 +155,7 @@ export default function UserStoryCard({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400 italic">No linked tickets</p>
+          <p className="text-sm text-[#404040] italic">No linked tickets</p>
         )}
       </div>
     </div>

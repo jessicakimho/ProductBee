@@ -13,9 +13,9 @@ interface FeatureCardProps {
 
 // Priority color mapping
 const priorityColors: Record<string, string> = {
-  P0: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  P1: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  P2: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  P0: 'bg-red-100 text-red-800',
+  P1: 'bg-orange-100 text-orange-800',
+  P2: 'bg-blue-100 text-blue-800',
 }
 
 export default function FeatureCard({
@@ -28,43 +28,43 @@ export default function FeatureCard({
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow border ${
+      className={`bg-white rounded-card-inner shadow-soft p-4 cursor-pointer hover:shadow-lg transition-all ${
         pendingChangeId
-          ? 'border-yellow-400 dark:border-yellow-600 border-2'
-          : 'border-gray-200 dark:border-gray-700'
+          ? 'border-yellow-400 border-2'
+          : ''
       }`}
     >
       <div className="flex items-start justify-between mb-2">
-        <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+        <h4 className="font-semibold text-[#0d0d0d] text-sm">
           {feature.title}
         </h4>
         <div className="flex items-center gap-2">
           {pendingChangeId && (
-            <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 flex items-center gap-1">
               <ClockIcon className="w-3 h-3" />
               Pending
             </span>
           )}
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${
+            className={`px-2 py-1 rounded-full text-xs font-medium ${
               priorityColors[feature.priority] ||
-              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+              'bg-gray-100 text-gray-800'
             }`}
           >
             {feature.priority}
           </span>
         </div>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">
+      <p className="text-sm text-[#404040] mb-3 line-clamp-2">
         {feature.description}
       </p>
-      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-3 text-xs text-[#404040]">
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
           <span>{feature.effortEstimateWeeks} weeks</span>
         </div>
         {feature.status === 'blocked' && (
-          <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+          <div className="flex items-center gap-1 text-orange-600">
             <AlertCircle className="w-3 h-3" />
             <span>Blocked</span>
           </div>
@@ -73,4 +73,3 @@ export default function FeatureCard({
     </div>
   )
 }
-

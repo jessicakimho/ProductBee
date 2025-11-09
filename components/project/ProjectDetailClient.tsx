@@ -44,9 +44,9 @@ interface ProjectDetailClientProps {
 
 // Risk level color mapping
 const riskColors: Record<string, string> = {
-  low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  high: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  low: 'bg-green-100 text-green-800',
+  medium: 'bg-yellow-100 text-yellow-800',
+  high: 'bg-red-100 text-red-800',
 }
 
 // Feature status columns (using API format values)
@@ -116,13 +116,13 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border ${
+      className={`bg-white rounded-card-inner shadow-soft p-4 border ${
         isOver
-          ? 'border-blue-400 dark:border-blue-600 border-2'
-          : 'border-gray-200 dark:border-gray-700'
+          ? 'border-[#a855f7] border-2'
+          : 'border-[#d9d9d9]'
       }`}
     >
-      <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+      <h3 className="font-semibold text-[#0d0d0d] mb-4">
         {title} ({features.length})
       </h3>
       <SortableContext items={featureIds} strategy={verticalListSortingStrategy}>
@@ -141,7 +141,7 @@ function DroppableColumn({
             )
           })}
           {features.length === 0 && (
-            <div className="text-center py-8 text-gray-400 text-sm">No features</div>
+            <div className="text-center py-8 text-[#404040] text-sm">No features</div>
           )}
         </div>
       </SortableContext>
@@ -335,13 +335,13 @@ export default function ProjectDetailClient({
   const riskLevel = displayData.project.roadmap.riskLevel?.toLowerCase() || 'low'
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen bg-[#f5f5f5]">
+      <nav className="bg-[#f5f5f5] border-b border-[#d9d9d9]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16 gap-4">
             <a
               href="/dashboard"
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="flex items-center gap-2 text-[#404040] hover:text-[#0d0d0d] transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Dashboard
@@ -354,16 +354,16 @@ export default function ProjectDetailClient({
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-3xl font-bold text-[#0d0d0d] mb-2">
                 {displayData.project.name}
               </h1>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-[#404040]">
                 {displayData.project.description}
               </p>
             </div>
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
-                riskColors[riskLevel] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                riskColors[riskLevel] || 'bg-gray-100 text-gray-800'
               }`}
             >
               {displayData.project.roadmap.riskLevel} Risk
@@ -374,7 +374,7 @@ export default function ProjectDetailClient({
         {/* View Toggle and Actions */}
         {currentView !== 'user-stories' && (
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-[#0d0d0d]">
               Features
             </h2>
             <div className="flex items-center gap-4">
@@ -388,7 +388,7 @@ export default function ProjectDetailClient({
               {!isViewer && (
                 <button
                   onClick={() => setIsCreateTicketOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
                 >
                   + Create Ticket
                 </button>
