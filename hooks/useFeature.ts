@@ -24,6 +24,13 @@ export function useFeature() {
       const responseData = await response.json()
 
       if (!response.ok || !responseData.success) {
+        // Check for permission errors
+        if (response.status === 403 || responseData.error?.includes('Access denied')) {
+          throw new Error('You do not have permission to update this feature. Viewers have read-only access.')
+        }
+        if (response.status === 404) {
+          throw new Error('Feature not found or you do not have access to it.')
+        }
         throw new Error(responseData.error || 'Failed to update feature')
       }
 

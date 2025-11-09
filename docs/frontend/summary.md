@@ -260,8 +260,189 @@ Constants are available from backend and can be imported in frontend components:
 5. Add unit tests for hooks and components
 6. Add integration tests for API interactions
 
-## Status
-✅ **Frontend reorganization completed successfully**
+## Phase 4: Account Isolation & Permission Enforcement
 
-All frontend work is complete and documented. Components are properly organized, typed, and integrated with the backend API. Real-time features work correctly, and all API calls handle the response wrapper format properly.
+### ✅ Completed Features
+
+#### 1. Server Component Updates
+- **Updated `/app/dashboard/page.tsx`**:
+  - Now uses `getUserFromSession()` from permissions utility for proper account isolation
+  - Filters projects by `account_id` to enforce account isolation
+  - Passes user role to `DashboardClient` component
+  
+- **Updated `/app/project/[id]/page.tsx`**:
+  - Uses `getUserFromSession()` and `canViewProject()` for permission checks
+  - Filters projects, features, and feedback by `account_id`
+  - Shows access denied message if user cannot view project
+  - Passes user role to `ProjectDetailClient` component
+
+#### 2. Role-Based UI Rendering
+- **DashboardClient**:
+  - Hide "Create Project" button for non-PM/non-Admin users
+  - Uses `ROLES` constants from `/lib/constants.ts`
+  - Shows appropriate messaging based on user role
+  
+- **ProjectDetailClient**:
+  - Implements permission checks using `ROLES` constants
+  - Determines `canEdit` and `canApprove` permissions
+  - Prevents viewers from updating features
+  - Passes permissions to child components
+  
+- **FeatureModal**:
+  - Uses `ROLES` constants for role checking
+  - Hides feedback submission forms for viewers
+  - Shows helpful message for viewers explaining read-only access
+  - Only shows approve/reject buttons to PMs and Admins
+  
+- **FeatureCard**:
+  - Accepts `canEdit` and `onStatusChange` props for future use
+  - Prepared for drag-and-drop or status change functionality
+
+#### 3. Permission-Aware API Calls
+- **useFeature Hook**:
+  - Added permission error handling (403 status)
+  - Shows helpful error messages for access denied scenarios
+  - Distinguishes between permission errors and other errors
+  
+- **useFeedback Hook**:
+  - Added permission checks for approve/reject operations
+  - Shows specific error messages for PM-only actions
+  - Handles 403 errors with user-friendly messages
+  
+- **CreateProjectModal**:
+  - Added permission error handling
+  - Shows helpful message if user lacks permission to create projects
+
+#### 4. Constants Integration
+- All components now use `ROLES` constants from `/lib/constants.ts`
+- Consistent role checking across all components
+- Type-safe role comparisons
+
+#### 5. Error Messages
+- Permission errors show helpful, actionable messages
+- Users are informed what role is required for actions
+- Clear distinction between permission errors and other errors
+- Error messages guide users to contact PMs/Admins when needed
+
+### Key Changes
+
+1. **Account Isolation**: All data queries now filter by `account_id` to ensure users only see data from their account
+2. **Role-Based Rendering**: UI elements are conditionally rendered based on user role
+3. **Permission Guards**: API calls include permission checks and helpful error handling
+4. **Constants Usage**: All role checks use constants from `/lib/constants.ts` for consistency
+5. **Viewer Read-Only**: Viewers see read-only UI with helpful messaging
+
+### Files Modified
+
+- `app/dashboard/page.tsx` - Added account isolation and user role passing
+- `app/project/[id]/page.tsx` - Added permission checks and account isolation
+- `components/dashboard/DashboardClient.tsx` - Added role-based UI rendering
+- `components/project/ProjectDetailClient.tsx` - Added permission checks and role-based rendering
+- `components/project/FeatureModal.tsx` - Added role-based UI and viewer read-only mode
+- `components/project/FeatureCard.tsx` - Added permission props for future use
+- `components/modals/CreateProjectModal.tsx` - Added permission error handling
+- `hooks/useFeature.ts` - Added permission-aware error handling
+- `hooks/useFeedback.ts` - Added permission-aware error handling for approve/reject
+
+## Status
+✅ **Phase 4: Account Isolation & Permission Enforcement - Completed**
+
+All Phase 4 frontend tasks are complete. The application now properly enforces account isolation, displays role-based UI, and provides helpful permission error messages. Components use constants for consistency, and viewers have read-only access with clear messaging.
+
+## Phase 5: User Roles & Team Management
+
+### ✅ Completed Features
+
+#### 1. User Profile Hooks
+- **Created `/hooks/useUserProfile.ts`**:
+  - `fetchProfile()` - Fetches current user's profile with workload metrics
+  - `updateProfile(updates)` - Updates user's role, specialization, and vacation dates
+  - Features: Loading states, error handling, toast notifications, type-safe API calls
+
+#### 2. Team Members Hooks
+- **Created `/hooks/useTeamMembers.ts`**:
+  - `fetchTeamMembers()` - Fetches all team members in the current account
+  - Features: Automatic fetch on mount, loading states, error handling, real-time ready
+
+#### 3. Onboarding Flow
+- **Created `/app/onboarding/page.tsx`**:
+  - Server component that checks if user needs onboarding
+  - Redirects users who already have proper role and specialization
+  - Allows users to update their profile even after onboarding
+
+- **Created `/components/onboarding/OnboardingForm.tsx`**:
+  - Client component with role selection (PM, Engineer, Viewer)
+  - Specialization dropdown for Engineers (Backend, Frontend, QA, DevOps)
+  - Form validation ensures engineers select a specialization
+  - Redirects to dashboard after successful profile update
+  - Beautiful, responsive UI with role cards and clear instructions
+
+#### 4. Onboarding Redirect Logic
+- **Updated `/app/dashboard/page.tsx`**:
+  - Added redirect logic to check if user needs onboarding
+  - Redirects users with default 'viewer' role to onboarding
+  - Redirects engineers without specialization to onboarding
+  - Ensures all users have proper role and specialization set before accessing dashboard
+
+#### 5. Team Members List
+- **Created `/components/team/TeamMembersList.tsx`**:
+  - Displays all team members in the current account
+  - Shows role badges with color coding (Admin, PM, Engineer, Viewer)
+  - Shows specialization badges for engineers
+  - Displays workload metrics (ticket count, story point count)
+  - Shows vacation status with indicator
+  - Beautiful, responsive card layout with hover effects
+  - Loading states and error handling
+
+- **Created `/app/team/page.tsx`**:
+  - Server component that displays team members list
+  - Ensures user authentication and account isolation
+  - Provides clean page layout for team management
+
+### Key Features
+
+1. **Role Selection**: Users can select between PM, Engineer, or Viewer roles during onboarding
+2. **Specialization**: Engineers must select a specialization (Backend, Frontend, QA, DevOps)
+3. **Onboarding Redirect**: Users with default 'viewer' role or engineers without specialization are redirected to onboarding
+4. **Profile Updates**: Users can update their role and specialization at any time through the onboarding page
+5. **Team Visibility**: All team members in the account can be viewed with their roles, specializations, and workload metrics
+6. **Workload Metrics**: Displays current ticket count and story point count for each team member (returns 0 until Phase 6)
+7. **Vacation Status**: Shows if team members are on vacation
+
+### Files Created
+
+- `hooks/useUserProfile.ts` - User profile management hook
+- `hooks/useTeamMembers.ts` - Team members fetching hook
+- `app/onboarding/page.tsx` - Onboarding page (server component)
+- `components/onboarding/OnboardingForm.tsx` - Onboarding form (client component)
+- `app/team/page.tsx` - Team page (server component)
+- `components/team/TeamMembersList.tsx` - Team members list (client component)
+
+### Files Modified
+
+- `app/dashboard/page.tsx` - Added onboarding redirect logic
+
+### Integration Points
+
+- Uses `GET /api/user/profile` and `PATCH /api/user/profile` for profile management
+- Uses `GET /api/team/members` for fetching team members
+- Integrates with constants from `/lib/constants.ts` (ROLES, SPECIALIZATIONS)
+- Uses types from `/types/api.ts` for type safety
+- Follows server/client component patterns
+- Implements proper error handling and loading states
+
+### UI/UX Features
+
+- Clean, modern onboarding interface with role selection cards
+- Clear instructions and helpful messaging
+- Form validation with error messages
+- Loading states and disabled buttons during submission
+- Beautiful team members list with color-coded badges
+- Responsive design for mobile and desktop
+- Dark mode support
+
+## Status
+✅ **Phase 5: User Roles & Team Management - Completed**
+
+All Phase 5 frontend tasks are complete. Users can now set their role and specialization through onboarding, and team members can be viewed with their roles, specializations, and workload metrics. The onboarding flow ensures all users have proper roles set before accessing the dashboard.
 

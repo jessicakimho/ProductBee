@@ -48,6 +48,48 @@ export function validateRole(role: string): void {
 }
 
 /**
+ * Validate specialization
+ */
+export function validateSpecialization(specialization: string | null | undefined): void {
+  if (specialization === null || specialization === undefined) {
+    return // null/undefined is valid (not all users have specialization)
+  }
+  const validSpecializations = ['Backend', 'Frontend', 'QA', 'DevOps']
+  if (!validSpecializations.includes(specialization)) {
+    throw APIErrors.badRequest(`Invalid specialization. Must be one of: ${validSpecializations.join(', ')}`)
+  }
+}
+
+/**
+ * Validate vacation dates array
+ */
+export function validateVacationDates(vacationDates: any): void {
+  if (vacationDates === null || vacationDates === undefined) {
+    return // null/undefined is valid
+  }
+  if (!Array.isArray(vacationDates)) {
+    throw APIErrors.badRequest('vacationDates must be an array')
+  }
+  for (const dateRange of vacationDates) {
+    if (typeof dateRange !== 'object' || dateRange === null) {
+      throw APIErrors.badRequest('Each vacation date range must be an object')
+    }
+    if (!dateRange.start || !dateRange.end) {
+      throw APIErrors.badRequest('Each vacation date range must have start and end dates')
+    }
+    // Validate date format (ISO date string)
+    const startDate = new Date(dateRange.start)
+    const endDate = new Date(dateRange.end)
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw APIErrors.badRequest('Invalid date format. Dates must be valid ISO date strings')
+    }
+    if (startDate > endDate) {
+      throw APIErrors.badRequest('Start date must be before or equal to end date')
+    }
+  }
+}
+
+/**
  * Validate feature status (database format)
  */
 export function validateFeatureStatus(status: string): void {

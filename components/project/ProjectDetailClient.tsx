@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { ROLES } from '@/lib/constants'
 import { useProject } from '@/hooks/useProject'
 import { useFeature } from '@/hooks/useFeature'
 import FeatureCard from './FeatureCard'
@@ -44,11 +45,21 @@ export default function ProjectDetailClient({
   // Use hook data if available and loaded, otherwise use initial data
   const displayData = projectData && projectData.project ? projectData : initialData
 
+  // Permission checks
+  const isViewer = userRole === ROLES.VIEWER
+  const isPMOrAdmin = userRole === ROLES.PM || userRole === ROLES.ADMIN
+  const canEdit = !isViewer // Only viewers are read-only
+  const canApprove = isPMOrAdmin // Only PM and Admin can approve proposals
+
   const handleFeatureClick = (feature: FeatureResponse) => {
     setSelectedFeature(feature)
   }
 
   const handleFeatureUpdate = async (featureId: string, newStatus: FeatureResponse['status']) => {
+    if (isViewer) {
+      // Viewers cannot update features
+      return
+    }
     const result = await updateFeatureStatus(featureId, newStatus)
     if (result) {
       refetch()
@@ -131,6 +142,8 @@ export default function ProjectDetailClient({
                       key={feature._id || feature.id}
                       feature={feature}
                       onClick={() => handleFeatureClick(feature)}
+                      canEdit={canEdit}
+                      onStatusChange={canEdit ? (featureId, newStatus) => handleFeatureUpdate(featureId, newStatus) : undefined}
                     />
                   ))}
                   {features.length === 0 && (
@@ -153,6 +166,8 @@ export default function ProjectDetailClient({
           projectId={displayData.project._id || displayData.project.id}
           feedback={displayData.feedbackByFeature[selectedFeature._id || selectedFeature.id] || []}
           userRole={userRole}
+          canEdit={canEdit}
+          canApprove={canApprove}
           onFeatureUpdate={() => {
             refetch()
             setSelectedFeature(null)

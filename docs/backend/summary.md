@@ -273,8 +273,166 @@ All routes should be tested for:
 /middleware.ts
 ```
 
+### 4. ✅ Account Isolation & Permission Enforcement (Phase 4)
+
+#### Account Isolation
+**Location:** `/lib/api/permissions.ts`, all API routes, database schema
+
+**Implementation:**
+- Added `account_id` field to all models (User, Project, Feature, Feedback)
+- Updated database schema with `account_id` columns and indexes
+- Created `extractAccountIdFromSession()` function to extract accountId from Auth0 metadata:
+  - Checks `app_metadata.account_id` (preferred)
+  - Falls back to `user_metadata.account_id`
+  - Falls back to `org_id` (if using Auth0 Organizations)
+  - Generates accountId from email domain as final fallback
+- Updated `getUserFromSession()` to automatically set and update user's `account_id`
+- All database queries now filter by `account_id` to enforce account isolation
+- All API routes enforce account scoping in queries and updates
+
+#### Permission Functions
+**Location:** `/lib/api/permissions.ts`
+
+**New Functions:**
+- `canViewProject()` - Check if user can view a project (account isolation + role-based)
+- `canEditProject()` - Check if user can edit a project (PM/Admin only, within account)
+- `canAssignTasks()` - Check if user can assign tasks (PM/Admin only, within account)
+- `canApproveProposals()` - Check if user can approve proposals (PM/Admin only, within account)
+- `requireProjectEdit()` - Require user to be able to edit a project
+- `requireTaskAssignment()` - Require user to be able to assign tasks
+- `requireProposalApproval()` - Require user to be able to approve proposals
+
+**Permission Enforcement:**
+- All API routes now enforce account isolation
+- Role-based permissions enforced on all routes:
+  - **Viewer**: Read-only access to projects and features
+  - **Engineer**: Can view and create feedback
+  - **PM**: Can view, edit projects, assign tasks, approve/reject proposals
+  - **Admin**: Full access within their account
+- Cross-account access is prevented at the database query level
+
+#### API Route Updates
+**Location:** `/app/api/`
+
+**Updated Routes:**
+- `GET /api/projects` - Filters projects by `account_id`
+- `GET /api/project/:id` - Enforces account isolation for project, features, and feedback
+- `POST /api/roadmap/generate` - Creates projects and features with `account_id`
+- `PATCH /api/feature/:id` - Enforces account isolation on feature updates
+- `POST /api/feedback/create` - Creates feedback with `account_id`
+- `POST /api/feedback/approve` - Enforces account isolation and PM/Admin permissions
+- `POST /api/feedback/reject` - Enforces account isolation and PM/Admin permissions
+
+#### Database Schema Updates
+**Location:** `/supabase/schema.sql`
+
+**Changes:**
+- Added `account_id TEXT NOT NULL` to `users` table
+- Added `account_id TEXT NOT NULL` to `projects` table
+- Added `account_id TEXT NOT NULL` to `features` table
+- Added `account_id TEXT NOT NULL` to `feedback` table
+- Added indexes on `account_id` columns for performance
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- Account Isolation section explaining how accountId is extracted
+- Permission Enforcement section explaining role-based access
+- Updated all endpoint documentation with account isolation and permission details
+
+### 5. ✅ User Roles & Team Management (Phase 5)
+
+#### User Model Extensions
+**Location:** `/models/User.ts`
+
+**New Fields:**
+- `specialization` - Engineer specialization (Backend, Frontend, QA, DevOps) - nullable, only for engineers
+- `vacation_dates` - Array of vacation date ranges (JSONB) - nullable
+- `current_ticket_count` - Computed workload metric (not stored in DB)
+- `current_story_point_count` - Computed workload metric (not stored in DB)
+
+**New Types:**
+- `VacationDateRange` - Interface for vacation date ranges with start and end dates
+
+#### Constants Extensions
+**Location:** `/lib/constants.ts`
+
+**New Constants:**
+- `SPECIALIZATIONS` - Enum for user specializations (Backend, Frontend, QA, DevOps)
+- `Specialization` - Type for specialization values
+
+#### Database Schema Updates
+**Location:** `/supabase/schema.sql`, `/supabase/migration_add_user_fields.sql`
+
+**New Columns:**
+- `specialization TEXT` - Check constraint for valid specializations
+- `vacation_dates JSONB` - Array of vacation date ranges, default empty array
+- Indexes on `specialization` and `vacation_dates` for performance
+
+#### Validation Functions
+**Location:** `/lib/api/validation.ts`
+
+**New Functions:**
+- `validateSpecialization()` - Validates specialization values (Backend, Frontend, QA, DevOps)
+- `validateVacationDates()` - Validates vacation date ranges (array of {start, end} objects)
+
+#### Workload Calculation
+**Location:** `/lib/api/workload.ts`
+
+**New Functions:**
+- `calculateUserWorkload()` - Calculates workload metrics for a user (ticket count, story point count)
+- `isUserOnVacation()` - Checks if user is currently on vacation based on vacation dates
+
+**Note:** Workload calculation requires the `assignedTo` field on features (Phase 6). Currently returns 0 for all metrics until Phase 6 is implemented.
+
+#### API Routes
+**Location:** `/app/api/user/profile/route.ts`, `/app/api/team/members/route.ts`
+
+**New Endpoints:**
+- `GET /api/user/profile` - Get current user's profile with workload metrics
+- `PATCH /api/user/profile` - Update current user's profile (users can only update their own profile)
+- `GET /api/team/members` - Get all team members in the account with workload metrics and vacation status
+
+**Features:**
+- Account isolation enforced on all endpoints
+- Users can only update their own profile
+- Role and specialization validation
+- Vacation date validation
+- Workload metrics computed on-the-fly
+- Vacation status calculated based on current date
+
+#### API Types
+**Location:** `/types/api.ts`
+
+**New Types:**
+- `UserProfileResponse` - User profile with workload metrics
+- `GetUserProfileResponse` - Response for GET /api/user/profile
+- `UpdateUserProfileRequest` - Request body for PATCH /api/user/profile
+- `UpdateUserProfileResponse` - Response for PATCH /api/user/profile
+- `TeamMemberResponse` - Team member with workload metrics and vacation status
+- `GetTeamMembersResponse` - Response for GET /api/team/members
+
+#### Database Types
+**Location:** `/types/database.ts`
+
+**Updated Types:**
+- `DatabaseUser` - Added `specialization` and `vacation_dates` fields
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- User Profile section with GET and PATCH endpoints
+- Team Management section with GET /api/team/members endpoint
+- UserProfileResponse and TeamMemberResponse type definitions
+- Specializations section in Permissions
+- Validation rules for profile updates
+
 ## Status
 ✅ **Backend infrastructure completed successfully**
+✅ **Phase 4: Account Isolation & Permission Enforcement completed**
+✅ **Phase 5: User Roles & Team Management completed**
 
-All backend work is complete and documented. The system includes robust error handling, type safety, permission checks, and comprehensive API routes for the AI Roadmap Dashboard.
+All backend work is complete and documented. The system includes robust error handling, type safety, permission checks, account isolation, user roles, team management, and comprehensive API routes for the AI Roadmap Dashboard.
 

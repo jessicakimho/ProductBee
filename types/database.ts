@@ -9,7 +9,10 @@ export interface DatabaseUser {
   email: string
   name: string
   role: 'admin' | 'pm' | 'engineer' | 'viewer'
+  account_id: string
   team_id?: string
+  specialization?: 'Backend' | 'Frontend' | 'QA' | 'DevOps' | null
+  vacation_dates?: Array<{ start: string; end: string }> | null
   created_at: string
 }
 
@@ -18,6 +21,7 @@ export interface DatabaseProject {
   name: string
   description: string
   created_by: string
+  account_id: string
   team_id: string
   roadmap: {
     summary: string
@@ -29,6 +33,7 @@ export interface DatabaseProject {
 export interface DatabaseFeature {
   id: string
   project_id: string
+  account_id: string
   title: string
   description: string
   status: 'backlog' | 'active' | 'blocked' | 'complete'
@@ -43,6 +48,7 @@ export interface DatabaseFeedback {
   project_id: string
   feature_id: string
   user_id: string
+  account_id: string
   type: 'comment' | 'proposal'
   content: string
   proposed_roadmap?: any

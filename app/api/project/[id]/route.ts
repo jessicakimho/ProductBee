@@ -39,18 +39,19 @@ export async function GET(
       throw APIErrors.notFound('Project')
     }
 
-    // Get features for this project
+    // Get features for this project - filtered by account_id for account isolation
     const { data: features, error: featuresError } = await supabase
       .from('features')
       .select('*')
       .eq('project_id', projectId)
+      .eq('account_id', user.account_id)
       .order('created_at', { ascending: true })
 
     if (featuresError) {
       throw APIErrors.internalError('Failed to fetch features')
     }
 
-    // Get feedback for this project
+    // Get feedback for this project - filtered by account_id for account isolation
     const { data: feedback, error: feedbackError } = await supabase
       .from('feedback')
       .select(`
@@ -61,6 +62,7 @@ export async function GET(
         )
       `)
       .eq('project_id', projectId)
+      .eq('account_id', user.account_id)
       .order('created_at', { ascending: false })
 
     if (feedbackError) {

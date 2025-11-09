@@ -149,3 +149,51 @@ export interface GenerateRoadmapResponse {
 export interface UserResponse {
   user: User
 }
+
+export interface UserProfileResponse {
+  _id: string
+  id: string
+  auth0_id: string
+  email: string
+  name: string
+  role: 'admin' | 'pm' | 'engineer' | 'viewer'
+  account_id: string
+  team_id?: string
+  specialization?: string | null
+  vacationDates?: Array<{ start: string; end: string }>
+  currentTicketCount?: number
+  currentStoryPointCount?: number
+  createdAt: string
+}
+
+export interface GetUserProfileResponse {
+  profile: UserProfileResponse
+}
+
+export interface UpdateUserProfileRequest {
+  role?: 'admin' | 'pm' | 'engineer' | 'viewer'
+  specialization?: string | null
+  vacationDates?: Array<{ start: string; end: string }> | null
+}
+
+export interface UpdateUserProfileResponse {
+  profile: UserProfileResponse
+}
+
+export interface TeamMemberResponse {
+  _id: string
+  id: string
+  email: string
+  name: string
+  role: 'admin' | 'pm' | 'engineer' | 'viewer'
+  specialization?: string | null
+  vacationDates?: Array<{ start: string; end: string }>
+  currentTicketCount: number
+  currentStoryPointCount: number
+  isOnVacation: boolean
+  createdAt: string
+}
+
+export interface GetTeamMembersResponse {
+  members: TeamMemberResponse[]
+}

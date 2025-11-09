@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, MessageSquare, Send, Clock } from 'lucide-react'
+import { ROLES } from '@/lib/constants'
 import { useFeedback } from '@/hooks/useFeedback'
 import FeedbackThread from '../feedback/FeedbackThread'
 import type { FeatureResponse, FeedbackResponse } from '@/types'
@@ -13,6 +14,8 @@ interface FeatureModalProps {
   projectId: string
   feedback: FeedbackResponse[]
   userRole?: string
+  canEdit?: boolean
+  canApprove?: boolean
   onFeatureUpdate?: () => void
 }
 
@@ -30,6 +33,8 @@ export default function FeatureModal({
   projectId,
   feedback,
   userRole,
+  canEdit = true,
+  canApprove = false,
   onFeatureUpdate,
 }: FeatureModalProps) {
   const [comment, setComment] = useState('')
@@ -37,7 +42,10 @@ export default function FeatureModal({
   const [activeTab, setActiveTab] = useState<'comment' | 'proposal'>('comment')
   const { createFeedback, approveFeedback, rejectFeedback, isSubmitting } = useFeedback()
 
-  const canApprove = userRole === 'pm' || userRole === 'admin'
+  // Determine permissions if not explicitly provided
+  const hasApprovePermission = canApprove || userRole === ROLES.PM || userRole === ROLES.ADMIN
+  const hasEditPermission = canEdit && userRole !== ROLES.VIEWER
+  const isViewer = userRole === ROLES.VIEWER
 
   useEffect(() => {
     if (!isOpen) {
@@ -137,33 +145,34 @@ export default function FeatureModal({
               feedback={feedback}
               onApprove={handleApprove}
               onReject={handleReject}
-              canApprove={canApprove}
+              canApprove={hasApprovePermission}
             />
           </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setActiveTab('comment')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'comment'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                Add Comment
-              </button>
-              <button
-                onClick={() => setActiveTab('proposal')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'proposal'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                Submit Proposal
-              </button>
-            </div>
+          {!isViewer && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setActiveTab('comment')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'comment'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Add Comment
+                </button>
+                <button
+                  onClick={() => setActiveTab('proposal')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'proposal'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Submit Proposal
+                </button>
+              </div>
 
             {activeTab === 'comment' ? (
               <div className="space-y-3">
@@ -202,7 +211,16 @@ export default function FeatureModal({
                 </button>
               </div>
             )}
-          </div>
+            </div>
+          )}
+          
+          {isViewer && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                You have view-only access. Contact a PM or Admin to add comments or proposals.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

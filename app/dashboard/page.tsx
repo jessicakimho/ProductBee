@@ -2,48 +2,15 @@ import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
 import DashboardClient from '@/components/dashboard/DashboardClient'
 import { createServerClient } from '@/lib/supabase'
+import { getUserFromSession } from '@/lib/api/permissions'
+import { ROLES } from '@/lib/constants'
 import type { ProjectResponse } from '@/types'
 
-async function getProjects() {
+async function getProjects(accountId: string) {
   try {
     const supabase = createServerClient()
-    
-    // Get or create user
-    const session = await getSession()
-    if (!session?.user) {
-      return []
-    }
 
-    let { data: user, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('auth0_id', session.user.sub)
-      .single()
-
-    if (userError && userError.code === 'PGRST116') {
-      // User doesn't exist, create it
-      const { data: newUser, error: createError } = await supabase
-        .from('users')
-        .insert({
-          auth0_id: session.user.sub,
-          name: session.user.name || session.user.email || 'Unknown',
-          email: session.user.email || '',
-          role: 'viewer',
-        })
-        .select()
-        .single()
-
-      if (createError) {
-        console.error('Error creating user:', createError)
-        return []
-      }
-      user = newUser
-    } else if (userError) {
-      console.error('Error fetching user:', userError)
-      return []
-    }
-
-    // Get all projects with creator info
+    // Get all projects with creator info, filtered by account_id
     const { data: projects, error: projectsError } = await supabase
       .from('projects')
       .select(`
@@ -53,6 +20,7 @@ async function getProjects() {
           email
         )
       `)
+      .eq('account_id', accountId)
       .order('created_at', { ascending: false })
 
     if (projectsError) {
@@ -86,9 +54,28 @@ export default async function DashboardPage() {
     redirect('/api/auth/login')
   }
 
-  const projects = await getProjects()
+  // Get user from database with proper account isolation
+  let user
+  try {
+    user = await getUserFromSession(session)
+  } catch (error) {
+    console.error('Error fetching user:', error)
+    redirect('/api/auth/login')
+  }
 
-  // Ensure we always pass an array
-  return <DashboardClient projects={Array.isArray(projects) ? projects : []} />
+  // Redirect to onboarding if user needs to set their role or specialization
+  // Users with default 'viewer' role or engineers without specialization should complete onboarding
+  const needsOnboarding = 
+    user.role === ROLES.VIEWER || 
+    (user.role === ROLES.ENGINEER && !user.specialization)
+
+  if (needsOnboarding) {
+    redirect('/onboarding')
+  }
+
+  const projects = await getProjects(user.account_id)
+
+  // Ensure we always pass an array and user role
+  return <DashboardClient projects={Array.isArray(projects) ? projects : []} userRole={user.role} />
 }
 

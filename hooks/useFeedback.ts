@@ -59,6 +59,10 @@ export function useFeedback() {
       const responseData = await response.json()
 
       if (!response.ok || !responseData.success) {
+        // Check for permission errors
+        if (response.status === 403 || responseData.error?.includes('Access denied') || responseData.error?.includes('PM')) {
+          throw new Error('Only PMs and Admins can approve proposals. Please contact a PM or Admin for assistance.')
+        }
         throw new Error(responseData.error || 'Failed to approve feedback')
       }
 
@@ -92,6 +96,10 @@ export function useFeedback() {
       const responseData = await response.json()
 
       if (!response.ok || !responseData.success) {
+        // Check for permission errors
+        if (response.status === 403 || responseData.error?.includes('Access denied') || responseData.error?.includes('PM')) {
+          throw new Error('Only PMs and Admins can reject proposals. Please contact a PM or Admin for assistance.')
+        }
         throw new Error(responseData.error || 'Failed to reject feedback')
       }
 

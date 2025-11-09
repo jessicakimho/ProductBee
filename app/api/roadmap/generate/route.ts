@@ -46,13 +46,14 @@ export async function POST(request: NextRequest) {
       throw APIErrors.internalError('Invalid roadmap data received from AI')
     }
 
-    // Create project
+    // Create project with account_id for account isolation
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .insert({
         name: projectName,
         description: projectDescription,
         created_by: user.id,
+        account_id: user.account_id,
         team_id: user.id, // Simplified teamId
         roadmap: {
           summary: roadmapData.summary,
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
 
     const featuresToCreate: FeatureToCreate[] = roadmapData.features.map((feature: any, index: number) => ({
       project_id: project.id,
+      account_id: user.account_id,
       title: feature.title,
       description: feature.description,
       priority: feature.priority,

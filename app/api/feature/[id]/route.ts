@@ -20,19 +20,25 @@ export async function PATCH(
     const updates = await validateJsonBody<UpdateFeatureRequest>(request)
     const supabase = createServerClient()
 
-    // Get feature to check project access
+    // Get feature to check project access and account isolation
     const { data: existingFeature, error: featureFetchError } = await supabase
       .from('features')
-      .select('project_id')
+      .select('project_id, account_id')
       .eq('id', featureId)
+      .eq('account_id', user.account_id)
       .single()
 
     if (featureFetchError || !existingFeature) {
       throw APIErrors.notFound('Feature')
     }
 
-    // Check project access
+    // Check project access (enforces account isolation)
     await requireProjectAccess(user, existingFeature.project_id)
+    
+    // Additional account_id check for safety
+    if (existingFeature.account_id !== user.account_id) {
+      throw APIErrors.forbidden('Access denied. Feature belongs to a different account.')
+    }
 
     // Map camelCase to snake_case for database and validate
     const dbUpdates: any = {}
@@ -68,6 +74,7 @@ export async function PATCH(
       .from('features')
       .update(dbUpdates)
       .eq('id', featureId)
+      .eq('account_id', user.account_id)
       .select()
       .single()
 

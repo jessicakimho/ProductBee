@@ -13,6 +13,16 @@ export const ROLES = {
 
 export type Role = typeof ROLES[keyof typeof ROLES]
 
+// User Specializations
+export const SPECIALIZATIONS = {
+  BACKEND: 'Backend',
+  FRONTEND: 'Frontend',
+  QA: 'QA',
+  DEVOPS: 'DevOps',
+} as const
+
+export type Specialization = typeof SPECIALIZATIONS[keyof typeof SPECIALIZATIONS]
+
 // Feature Status
 export const FEATURE_STATUS = {
   NOT_STARTED: 'not_started',

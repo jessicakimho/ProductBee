@@ -56,6 +56,10 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           code: responseData.code,
           fullResponse: responseData,
         })
+        // Check for permission errors
+        if (response.status === 403 || errorMessage.includes('Access denied') || errorMessage.includes('PM')) {
+          throw new Error('Only PMs and Admins can create projects. Please contact a PM or Admin for assistance.')
+        }
         throw new Error(errorMessage)
       }
 

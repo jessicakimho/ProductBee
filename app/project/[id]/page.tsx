@@ -2,9 +2,10 @@ import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
 import ProjectDetailClient from '@/components/project/ProjectDetailClient'
 import { createServerClient } from '@/lib/supabase'
+import { getUserFromSession, canViewProject } from '@/lib/api/permissions'
 import type { GetProjectResponse, FeatureResponse, FeedbackResponse } from '@/types'
 
-async function getProjectData(id: string) {
+async function getProjectData(id: string, accountId: string) {
   try {
     const supabase = createServerClient()
 
@@ -14,7 +15,7 @@ async function getProjectData(id: string) {
       return null
     }
 
-    // Get project with creator info
+    // Get project with creator info, filtered by account_id
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .select(`
@@ -25,17 +26,19 @@ async function getProjectData(id: string) {
         )
       `)
       .eq('id', id)
+      .eq('account_id', accountId)
       .single()
 
     if (projectError || !project) {
       return null
     }
 
-    // Get features for this project
+    // Get features for this project, filtered by account_id
     const { data: features, error: featuresError } = await supabase
       .from('features')
       .select('*')
       .eq('project_id', id)
+      .eq('account_id', accountId)
       .order('created_at', { ascending: true })
 
     if (featuresError) {
@@ -43,7 +46,7 @@ async function getProjectData(id: string) {
       return null
     }
 
-    // Get feedback for this project
+    // Get feedback for this project, filtered by account_id
     const { data: feedback, error: feedbackError } = await supabase
       .from('feedback')
       .select(`
@@ -54,6 +57,7 @@ async function getProjectData(id: string) {
         )
       `)
       .eq('project_id', id)
+      .eq('account_id', accountId)
       .order('created_at', { ascending: false })
 
     if (feedbackError) {
@@ -139,7 +143,39 @@ export default async function ProjectPage({
     redirect('/api/auth/login')
   }
 
-  const data = await getProjectData(params.id)
+  // Get user from database with proper account isolation
+  let user
+  try {
+    user = await getUserFromSession(session)
+  } catch (error) {
+    console.error('Error fetching user:', error)
+    redirect('/api/auth/login')
+  }
+
+  // Check if user can view this project (account isolation + permissions)
+  const canView = await canViewProject(user, params.id)
+  if (!canView) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Access Denied
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            You do not have access to this project.
+          </p>
+          <a
+            href="/dashboard"
+            className="text-blue-600 hover:text-blue-700"
+          >
+            Return to Dashboard
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  const data = await getProjectData(params.id, user.account_id)
 
   if (!data) {
     return (
@@ -159,6 +195,6 @@ export default async function ProjectPage({
     )
   }
 
-  return <ProjectDetailClient projectData={data} userRole={session.user?.role as string} />
+  return <ProjectDetailClient projectData={data} userRole={user.role} />
 }
 

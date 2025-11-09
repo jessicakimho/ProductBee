@@ -75,6 +75,7 @@ GEMINI_API_KEY=your-gemini-api-key-here
 - Create a new project
 - Go to Project Settings > API and copy your Project URL and anon key
 - Run the SQL schema from `supabase/schema.sql` in the Supabase SQL Editor
+- **If you have an existing database**, run the migration from `supabase/migration_add_account_id.sql` to add account isolation support
 - Enable Realtime in Database > Replication for tables: projects, features, feedback
 
 6. Run the development server:

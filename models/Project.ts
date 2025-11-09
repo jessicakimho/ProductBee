@@ -8,6 +8,7 @@ export interface Project extends BaseModel {
   name: string
   description: string
   created_by: string
+  account_id: string
   team_id: string
   roadmap: {
     summary: string

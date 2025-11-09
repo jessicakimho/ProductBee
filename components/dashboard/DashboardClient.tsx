@@ -4,18 +4,23 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { Plus, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { ROLES } from '@/lib/constants'
 import ProjectCard from './ProjectCard'
 import CreateProjectModal from '../modals/CreateProjectModal'
 import type { ProjectResponse } from '@/types'
 
 interface DashboardClientProps {
   projects?: ProjectResponse[]
+  userRole?: string
 }
 
-export default function DashboardClient({ projects: initialProjects = [] }: DashboardClientProps) {
+export default function DashboardClient({ projects: initialProjects = [], userRole }: DashboardClientProps) {
   const { user, isLoading } = useUser()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [projects, setProjects] = useState<ProjectResponse[]>(initialProjects || [])
+
+  // Check if user can create projects (PM or Admin only)
+  const canCreateProject = userRole === ROLES.PM || userRole === ROLES.ADMIN
 
   // Real-time subscription for projects
   useEffect(() => {
@@ -103,27 +108,33 @@ export default function DashboardClient({ projects: initialProjects = [] }: Dash
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
             Projects
           </h2>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-          >
-            <Plus className="w-5 h-5" />
-            Create Project
-          </button>
+          {canCreateProject && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            >
+              <Plus className="w-5 h-5" />
+              Create Project
+            </button>
+          )}
         </div>
 
         {!projects || projects.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              No projects yet. Create your first project to get started!
+              {canCreateProject 
+                ? 'No projects yet. Create your first project to get started!'
+                : 'No projects available.'}
             </p>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Create Project
-            </button>
+            {canCreateProject && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                Create Project
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

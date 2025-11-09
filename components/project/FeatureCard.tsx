@@ -6,6 +6,8 @@ import type { FeatureResponse } from '@/types'
 interface FeatureCardProps {
   feature: FeatureResponse
   onClick: () => void
+  canEdit?: boolean
+  onStatusChange?: (featureId: string, newStatus: FeatureResponse['status']) => void
 }
 
 // Priority color mapping
@@ -15,7 +17,9 @@ const priorityColors: Record<string, string> = {
   P2: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
 }
 
-export default function FeatureCard({ feature, onClick }: FeatureCardProps) {
+export default function FeatureCard({ feature, onClick, canEdit, onStatusChange }: FeatureCardProps) {
+  // Props are accepted for future use but not implemented yet
+  // Status changes will be handled in FeatureModal or via drag-and-drop
   return (
     <div
       onClick={onClick}

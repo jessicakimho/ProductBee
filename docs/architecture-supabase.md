@@ -262,9 +262,6 @@ Refactor `gemini.ts` to use these modular prompts.
     summary.md
   /backend
     summary.md
-  /features
-    /backend
-    /frontend
   api.md
   architecture-supabase.md
   phases.md
@@ -272,7 +269,6 @@ Refactor `gemini.ts` to use these modular prompts.
 * All API endpoints documented in `/docs/api.md`
 * Agent-specific summaries in `/docs/frontend/summary.md` and `/docs/backend/summary.md`
 * Development phases tracked in `/docs/phases.md`
-* Feature documentation can be added to `/docs/features/[agent]/` as needed
 
 ---
 

@@ -7,6 +7,7 @@ import { BaseModel } from './base'
 export interface Feedback extends BaseModel {
   project_id: string
   feature_id: string
+  account_id: string
   type: 'comment' | 'timeline_proposal'
   content: string
   status: 'pending' | 'approved' | 'rejected' | 'discussion'

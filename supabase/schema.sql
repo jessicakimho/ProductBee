@@ -1,5 +1,18 @@
 -- ProductBee Database Schema for Supabase
 -- Run this SQL in your Supabase SQL Editor
+--
+-- MIGRATION NOTES:
+-- If you have an existing database, you'll need to add account_id columns:
+-- 1. ALTER TABLE users ADD COLUMN account_id TEXT;
+-- 2. ALTER TABLE projects ADD COLUMN account_id TEXT;
+-- 3. ALTER TABLE features ADD COLUMN account_id TEXT;
+-- 4. ALTER TABLE feedback ADD COLUMN account_id TEXT;
+-- 5. Update existing records with account_id values (based on your migration strategy)
+-- 6. ALTER TABLE users ALTER COLUMN account_id SET NOT NULL;
+-- 7. ALTER TABLE projects ALTER COLUMN account_id SET NOT NULL;
+-- 8. ALTER TABLE features ALTER COLUMN account_id SET NOT NULL;
+-- 9. ALTER TABLE feedback ALTER COLUMN account_id SET NOT NULL;
+-- 10. Create indexes as shown below
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -8,6 +21,10 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   role TEXT CHECK (role IN ('pm', 'engineer', 'admin', 'viewer')) DEFAULT 'viewer',
+  account_id TEXT NOT NULL,
+  team_id TEXT,
+  specialization TEXT CHECK (specialization IN ('Backend', 'Frontend', 'QA', 'DevOps')),
+  vacation_dates JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -17,6 +34,7 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   description TEXT NOT NULL,
   created_by UUID REFERENCES users(id) ON DELETE CASCADE,
+  account_id TEXT NOT NULL,
   team_id TEXT NOT NULL,
   roadmap JSONB NOT NULL, -- { summary: string, riskLevel: string }
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -26,6 +44,7 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS features (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  account_id TEXT NOT NULL,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   status TEXT CHECK (status IN ('backlog', 'active', 'blocked', 'complete')) DEFAULT 'backlog',
@@ -41,6 +60,7 @@ CREATE TABLE IF NOT EXISTS feedback (
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
   feature_id UUID REFERENCES features(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  account_id TEXT NOT NULL,
   type TEXT CHECK (type IN ('comment', 'proposal')) NOT NULL,
   content TEXT NOT NULL,
   proposed_roadmap JSONB,
@@ -51,11 +71,17 @@ CREATE TABLE IF NOT EXISTS feedback (
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_auth0_id ON users(auth0_id);
+CREATE INDEX IF NOT EXISTS idx_users_account_id ON users(account_id);
+CREATE INDEX IF NOT EXISTS idx_users_specialization ON users(specialization);
+CREATE INDEX IF NOT EXISTS idx_users_vacation_dates ON users USING GIN (vacation_dates);
 CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
+CREATE INDEX IF NOT EXISTS idx_projects_account_id ON projects(account_id);
 CREATE INDEX IF NOT EXISTS idx_features_project_id ON features(project_id);
+CREATE INDEX IF NOT EXISTS idx_features_account_id ON features(account_id);
 CREATE INDEX IF NOT EXISTS idx_features_status ON features(status);
 CREATE INDEX IF NOT EXISTS idx_feedback_project_id ON feedback(project_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_feature_id ON feedback(feature_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_account_id ON feedback(account_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
 
 -- Enable real-time for tables (requires Supabase Realtime to be enabled)

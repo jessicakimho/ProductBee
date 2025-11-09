@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServerClient()
 
-    // Get all projects with creator info
+    // Get all projects with creator info - filtered by account_id for account isolation
     const { data: projects, error: projectsError } = await supabase
       .from('projects')
       .select(`
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
           email
         )
       `)
+      .eq('account_id', user.account_id)
       .order('created_at', { ascending: false })
 
     if (projectsError) {

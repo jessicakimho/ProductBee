@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { getSession } from '@auth0/nextjs-auth0'
 import { createServerClient } from '@/lib/supabase'
 import { compareRoadmaps } from '@/lib/gemini'
-import { getUserFromSession, requirePMOrAdmin } from '@/lib/api/permissions'
+import { getUserFromSession, requireProposalApproval } from '@/lib/api/permissions'
 import { validateUUID, validateJsonBody, validateRequired } from '@/lib/api/validation'
 import { handleError, successResponse, APIErrors } from '@/lib/api/errors'
 import type { ApproveFeedbackRequest, ApproveFeedbackResponse } from '@/types/api'
@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSession()
     const user = await getUserFromSession(session)
-    requirePMOrAdmin(user)
 
     const body = await validateJsonBody<ApproveFeedbackRequest>(request)
     validateRequired(body, ['feedbackId'])
@@ -20,11 +19,12 @@ export async function POST(request: NextRequest) {
     const { feedbackId } = body
     const supabase = createServerClient()
 
-    // Get feedback
+    // Get feedback - filtered by account_id for account isolation
     const { data: feedback, error: feedbackError } = await supabase
       .from('feedback')
       .select('*')
       .eq('id', feedbackId)
+      .eq('account_id', user.account_id)
       .single()
 
     if (feedbackError || !feedback) {
@@ -39,11 +39,15 @@ export async function POST(request: NextRequest) {
       throw APIErrors.badRequest('Feedback already processed')
     }
 
-    // Get project
+    // Check permission to approve proposals (PM/Admin + account isolation)
+    await requireProposalApproval(user, feedback.project_id)
+
+    // Get project - filtered by account_id for account isolation
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .select('*')
       .eq('id', feedback.project_id)
+      .eq('account_id', user.account_id)
       .single()
 
     if (projectError || !project) {
@@ -69,11 +73,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update feedback status
+    // Update feedback status - filtered by account_id for account isolation
     const { data: updatedFeedback, error: updateError } = await supabase
       .from('feedback')
       .update({ status: 'approved' })
       .eq('id', feedbackId)
+      .eq('account_id', user.account_id)
       .select()
       .single()
 

@@ -25,17 +25,19 @@ export async function POST(request: NextRequest) {
     // Check project access
     await requireProjectAccess(user, projectId)
 
-    // Verify project and feature exist
+    // Verify project and feature exist - filtered by account_id for account isolation
     const { data: project, error: projectError } = await supabase
       .from('projects')
       .select('*')
       .eq('id', projectId)
+      .eq('account_id', user.account_id)
       .single()
 
     const { data: feature, error: featureError } = await supabase
       .from('features')
       .select('*')
       .eq('id', featureId)
+      .eq('account_id', user.account_id)
       .single()
 
     if (projectError || !project) {
@@ -64,13 +66,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create feedback
+    // Create feedback with account_id for account isolation
     const { data: feedback, error: feedbackError } = await supabase
       .from('feedback')
       .insert({
         project_id: projectId,
         feature_id: featureId,
         user_id: user.id,
+        account_id: user.account_id,
         type,
         content,
         proposed_roadmap: proposedRoadmap || null,
