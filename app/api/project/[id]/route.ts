@@ -4,7 +4,9 @@ import { createServerClient } from '@/lib/supabase'
 import { getUserFromSession, requireProjectAccess } from '@/lib/api/permissions'
 import { validateUUID } from '@/lib/api/validation'
 import { handleError, successResponse, APIErrors } from '@/lib/api/errors'
+import { calculateTimeline } from '@/lib/api/timeline'
 import type { GetProjectResponse } from '@/types/api'
+import type { Feature } from '@/models/Feature'
 
 export async function GET(
   request: NextRequest,
@@ -110,8 +112,39 @@ export async function GET(
       } : null,
     }
 
-    // Format features data
-    const formattedFeatures = features?.map((feature) => ({
+    // Convert database features to Feature model format
+    const featureModels: Feature[] = (features || []).map((feature) => ({
+      id: feature.id,
+      created_at: feature.created_at,
+      updated_at: feature.updated_at || undefined,
+      project_id: feature.project_id,
+      account_id: feature.account_id,
+      title: feature.title,
+      description: feature.description,
+      status: feature.status === 'backlog' ? 'not_started' : 
+              feature.status === 'active' ? 'in_progress' : 
+              feature.status as 'not_started' | 'in_progress' | 'blocked' | 'complete',
+      priority: feature.priority === 'P0' ? 'critical' :
+                feature.priority === 'P1' ? 'high' :
+                feature.priority === 'P2' ? 'medium' : 'low',
+      dependencies: feature.depends_on || [],
+      estimated_effort_weeks: feature.effort_estimate_weeks,
+      assigned_to: feature.assigned_to || null,
+      reporter: feature.reporter || null,
+      story_points: feature.story_points ?? null,
+      labels: feature.labels || [],
+      acceptance_criteria: feature.acceptance_criteria || null,
+      ticket_type: feature.ticket_type || 'feature',
+      start_date: feature.start_date || null,
+      end_date: feature.end_date || null,
+      duration: feature.duration ?? null,
+    }))
+
+    // Calculate timeline data (Phase 7)
+    const timelineData = calculateTimeline(featureModels)
+
+    // Format features data with timeline information
+    const formattedFeatures = timelineData.features.map((feature) => ({
       _id: feature.id,
       id: feature.id,
       projectId: feature.project_id,
@@ -119,15 +152,34 @@ export async function GET(
       description: feature.description,
       status: feature.status,
       priority: feature.priority,
-      effortEstimateWeeks: feature.effort_estimate_weeks,
-      dependsOn: feature.depends_on || [],
+      effortEstimateWeeks: feature.estimated_effort_weeks || 0,
+      dependsOn: feature.dependencies || [],
       createdAt: feature.created_at,
-    })) || []
+      // Jira-style fields (Phase 6)
+      assignedTo: feature.assigned_to || null,
+      reporter: feature.reporter || null,
+      storyPoints: feature.story_points ?? null,
+      labels: feature.labels || [],
+      acceptanceCriteria: feature.acceptance_criteria || null,
+      ticketType: feature.ticket_type || 'feature',
+      // Timeline fields (Phase 7)
+      startDate: feature.start_date || feature.calculatedStartDate || null,
+      endDate: feature.end_date || feature.calculatedEndDate || null,
+      duration: feature.duration || feature.calculatedDuration || null,
+      isOnCriticalPath: feature.isOnCriticalPath || false,
+      slackDays: feature.slackDays,
+    }))
 
     const response: GetProjectResponse = {
       project: formattedProject,
       features: formattedFeatures,
       feedbackByFeature,
+      timeline: {
+        dependencyChains: timelineData.dependencyChains,
+        criticalPath: timelineData.criticalPath,
+        milestones: timelineData.milestones,
+        overlaps: timelineData.overlaps,
+      },
     }
 
     return successResponse(response)

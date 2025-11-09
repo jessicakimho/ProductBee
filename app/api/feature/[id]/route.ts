@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { getSession } from '@auth0/nextjs-auth0'
 import { createServerClient } from '@/lib/supabase'
 import { getUserFromSession, requireProjectAccess } from '@/lib/api/permissions'
-import { validateUUID, validateJsonBody, validateFeatureStatus, validatePriority } from '@/lib/api/validation'
+import { validateUUID, validateJsonBody, validateFeatureStatus, validatePriority, validateTicketType, validateStoryPoints, validateLabels } from '@/lib/api/validation'
 import { handleError, successResponse, APIErrors } from '@/lib/api/errors'
 import type { UpdateFeatureRequest, UpdateFeatureResponse } from '@/types/api'
 
@@ -64,6 +64,34 @@ export async function PATCH(
       updates.dependsOn.forEach((depId) => validateUUID(depId, 'Dependency ID'))
       dbUpdates.depends_on = updates.dependsOn
     }
+    // Jira-style fields (Phase 6)
+    if (updates.assignedTo !== undefined) {
+      if (updates.assignedTo !== null) {
+        validateUUID(updates.assignedTo, 'Assigned To')
+      }
+      dbUpdates.assigned_to = updates.assignedTo
+    }
+    if (updates.reporter !== undefined) {
+      if (updates.reporter !== null) {
+        validateUUID(updates.reporter, 'Reporter')
+      }
+      dbUpdates.reporter = updates.reporter
+    }
+    if (updates.storyPoints !== undefined) {
+      validateStoryPoints(updates.storyPoints)
+      dbUpdates.story_points = updates.storyPoints
+    }
+    if (updates.labels !== undefined) {
+      validateLabels(updates.labels)
+      dbUpdates.labels = updates.labels || []
+    }
+    if (updates.acceptanceCriteria !== undefined) {
+      dbUpdates.acceptance_criteria = updates.acceptanceCriteria || null
+    }
+    if (updates.ticketType !== undefined) {
+      validateTicketType(updates.ticketType)
+      dbUpdates.ticket_type = updates.ticketType || 'feature'
+    }
 
     // If no updates, return error
     if (Object.keys(dbUpdates).length === 0) {
@@ -94,6 +122,13 @@ export async function PATCH(
       effortEstimateWeeks: feature.effort_estimate_weeks,
       dependsOn: feature.depends_on || [],
       createdAt: feature.created_at,
+      // Jira-style fields (Phase 6)
+      assignedTo: feature.assigned_to || null,
+      reporter: feature.reporter || null,
+      storyPoints: feature.story_points ?? null,
+      labels: feature.labels || [],
+      acceptanceCriteria: feature.acceptance_criteria || null,
+      ticketType: feature.ticket_type || 'feature',
     }
 
     const response: UpdateFeatureResponse = {

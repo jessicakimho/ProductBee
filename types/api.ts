@@ -51,6 +51,19 @@ export interface FeatureResponse {
   effortEstimateWeeks: number
   dependsOn: string[]
   createdAt: string
+  // Jira-style fields (Phase 6)
+  assignedTo?: string | null
+  reporter?: string | null
+  storyPoints?: number | null
+  labels?: string[]
+  acceptanceCriteria?: string | null
+  ticketType?: 'feature' | 'bug' | 'epic' | 'story'
+  // Timeline fields (Phase 7)
+  startDate?: string | null
+  endDate?: string | null
+  duration?: number | null
+  isOnCriticalPath?: boolean
+  slackDays?: number
 }
 
 export interface CreateProjectResponse {
@@ -66,6 +79,30 @@ export interface GetProjectResponse {
   project: ProjectResponse
   features: FeatureResponse[]
   feedbackByFeature: Record<string, FeedbackResponse[]>
+  // Timeline data (Phase 7)
+  timeline?: {
+    dependencyChains: Array<{
+      featureId: string
+      chain: string[]
+      depth: number
+    }>
+    criticalPath: {
+      path: string[]
+      totalDuration: number
+      startDate: string
+      endDate: string
+    } | null
+    milestones: Array<{
+      date: string
+      features: string[]
+      description: string
+    }>
+    overlaps: Array<{
+      feature1: string
+      feature2: string
+      overlapDays: number
+    }>
+  }
 }
 
 // Alias for consistency
@@ -79,6 +116,32 @@ export interface UpdateFeatureRequest {
   description?: string
   effortEstimateWeeks?: number
   dependsOn?: string[]
+  // Jira-style fields (Phase 6)
+  assignedTo?: string | null
+  reporter?: string | null
+  storyPoints?: number | null
+  labels?: string[]
+  acceptanceCriteria?: string | null
+  ticketType?: 'feature' | 'bug' | 'epic' | 'story'
+}
+
+export interface CreateFeatureRequest {
+  projectId: string
+  title: string
+  description: string
+  priority: string
+  effortEstimateWeeks: number
+  dependsOn?: string[]
+  // Jira-style fields (Phase 6)
+  assignedTo?: string | null
+  storyPoints?: number | null
+  labels?: string[]
+  acceptanceCriteria?: string | null
+  ticketType?: 'feature' | 'bug' | 'epic' | 'story'
+}
+
+export interface CreateFeatureResponse {
+  feature: FeatureResponse
 }
 
 export interface UpdateFeatureResponse {
@@ -196,4 +259,35 @@ export interface TeamMemberResponse {
 
 export interface GetTeamMembersResponse {
   members: TeamMemberResponse[]
+}
+
+// Assignment Suggestion API Types (Phase 9)
+export interface SuggestAssigneeRequest {
+  taskTitle: string
+  taskDescription: string
+  taskLabels?: string[]
+  taskType?: 'feature' | 'bug' | 'epic' | 'story'
+  projectId?: string
+  featureId?: string // Optional: if provided, uses feature context instead of taskTitle/taskDescription
+}
+
+export interface AssignmentRecommendation {
+  engineerId: string
+  engineerName: string
+  reasoning: string
+  confidenceScore: number
+  matchFactors: {
+    specializationMatch: boolean
+    workloadSuitable: boolean
+    pastExperience: boolean
+  }
+}
+
+export interface AssignmentSuggestion {
+  requiredSpecialization: 'Backend' | 'Frontend' | 'QA' | 'DevOps' | 'General' | null
+  recommendations: AssignmentRecommendation[]
+}
+
+export interface SuggestAssigneeResponse {
+  suggestion: AssignmentSuggestion
 }

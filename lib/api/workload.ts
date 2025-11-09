@@ -24,37 +24,27 @@ export async function calculateUserWorkload(
 ): Promise<WorkloadMetrics> {
   const supabase = createServerClient()
 
-  // TODO: Phase 6 - Implement workload calculation once assignedTo field is added to features
-  // For now, return 0 for all metrics
-  // 
-  // When Phase 6 is complete, this should:
+  // Phase 6 complete - Calculate workload from assigned features
   // 1. Query features where assigned_to = userId
   // 2. Filter by account_id for account isolation
   // 3. Exclude completed features (status != 'complete')
   // 4. Count tickets and sum story points
-  // 
-  // Example implementation (to be enabled in Phase 6):
-  // const { data: features, error } = await supabase
-  //   .from('features')
-  //   .select('id, story_points, status')
-  //   .eq('assigned_to', userId)
-  //   .eq('account_id', accountId)
-  //   .neq('status', 'complete')
-  //
-  // if (error) {
-  //   console.error('Error calculating workload:', error)
-  //   return { ticketCount: 0, storyPointCount: 0 }
-  // }
-  //
-  // const ticketCount = features?.length || 0
-  // const storyPointCount = features?.reduce((sum, f) => sum + (f.story_points || 0), 0) || 0
-  //
-  // return { ticketCount, storyPointCount }
+  const { data: features, error } = await supabase
+    .from('features')
+    .select('id, story_points, status')
+    .eq('assigned_to', userId)
+    .eq('account_id', accountId)
+    .neq('status', 'complete')
 
-  return {
-    ticketCount: 0,
-    storyPointCount: 0,
+  if (error) {
+    console.error('Error calculating workload:', error)
+    return { ticketCount: 0, storyPointCount: 0 }
   }
+
+  const ticketCount = features?.length || 0
+  const storyPointCount = features?.reduce((sum, f) => sum + (f.story_points || 0), 0) || 0
+
+  return { ticketCount, storyPointCount }
 }
 
 /**

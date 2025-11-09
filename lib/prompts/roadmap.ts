@@ -21,13 +21,23 @@ export function getRoadmapPrompt(input: RoadmapGenerationInput): string {
       "description": "Feature description",
       "priority": "P0" | "P1" | "P2",
       "effortEstimateWeeks": number,
-      "dependsOn": [] // array of feature indices (0-based) this feature depends on
+      "dependsOn": [], // array of feature indices (0-based) this feature depends on
+      "ticketType": "feature" | "bug" | "epic" | "story", // Jira-style ticket type
+      "storyPoints": number | null, // Story points estimate (1-100, or null if not applicable)
+      "labels": [], // Array of label strings (e.g., ["frontend", "api", "urgent"])
+      "acceptanceCriteria": string | null // Acceptance criteria for the ticket, or null
     }
   ]
 }
 
 Project Name: ${input.projectName}
 Project Description: ${input.projectDescription}
+
+Notes:
+- Use "ticketType": "feature" for most roadmap items, "epic" for large initiatives, "story" for user stories, "bug" only if explicitly mentioned
+- Estimate "storyPoints" using Fibonacci-like scale (1, 2, 3, 5, 8, 13, 21, etc.) or null if not applicable
+- Add relevant "labels" based on the feature (e.g., technology stack, area of code, priority tags)
+- Provide clear "acceptanceCriteria" that define when the ticket is considered complete
 
 Return ONLY valid JSON, no markdown formatting, no code blocks.`
 }
@@ -77,6 +87,19 @@ export function parseRoadmapResponse(response: string): any {
       }
       if (typeof feature.effortEstimateWeeks !== 'number') {
         throw new Error(`Invalid feature at index ${index}: missing or invalid effortEstimateWeeks`)
+      }
+      // Validate optional Jira-style fields
+      if (feature.ticketType !== undefined && !['feature', 'bug', 'epic', 'story'].includes(feature.ticketType)) {
+        throw new Error(`Invalid feature at index ${index}: invalid ticketType`)
+      }
+      if (feature.storyPoints !== undefined && feature.storyPoints !== null && typeof feature.storyPoints !== 'number') {
+        throw new Error(`Invalid feature at index ${index}: storyPoints must be a number or null`)
+      }
+      if (feature.labels !== undefined && !Array.isArray(feature.labels)) {
+        throw new Error(`Invalid feature at index ${index}: labels must be an array`)
+      }
+      if (feature.acceptanceCriteria !== undefined && feature.acceptanceCriteria !== null && typeof feature.acceptanceCriteria !== 'string') {
+        throw new Error(`Invalid feature at index ${index}: acceptanceCriteria must be a string or null`)
       }
     })
     

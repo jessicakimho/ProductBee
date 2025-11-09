@@ -95,6 +95,16 @@ export const RISK_LEVELS = {
 
 export type RiskLevel = typeof RISK_LEVELS[keyof typeof RISK_LEVELS]
 
+// Ticket Types (Jira-style)
+export const TICKET_TYPES = {
+  FEATURE: 'feature',
+  BUG: 'bug',
+  EPIC: 'epic',
+  STORY: 'story',
+} as const
+
+export type TicketType = typeof TICKET_TYPES[keyof typeof TICKET_TYPES]
+
 // API Response Codes
 export const HTTP_STATUS = {
   OK: 200,

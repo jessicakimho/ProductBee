@@ -51,6 +51,17 @@ CREATE TABLE IF NOT EXISTS features (
   priority TEXT CHECK (priority IN ('P0', 'P1', 'P2')) NOT NULL,
   effort_estimate_weeks INTEGER NOT NULL,
   depends_on UUID[] DEFAULT '{}',
+  -- Jira-style fields (Phase 6)
+  assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
+  reporter UUID REFERENCES users(id) ON DELETE SET NULL,
+  story_points INTEGER,
+  labels TEXT[] DEFAULT '{}',
+  acceptance_criteria TEXT,
+  ticket_type TEXT CHECK (ticket_type IN ('feature', 'bug', 'epic', 'story')) DEFAULT 'feature',
+  -- Timeline fields (Phase 7)
+  start_date DATE,
+  end_date DATE,
+  duration INTEGER, -- Duration in days
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -79,6 +90,12 @@ CREATE INDEX IF NOT EXISTS idx_projects_account_id ON projects(account_id);
 CREATE INDEX IF NOT EXISTS idx_features_project_id ON features(project_id);
 CREATE INDEX IF NOT EXISTS idx_features_account_id ON features(account_id);
 CREATE INDEX IF NOT EXISTS idx_features_status ON features(status);
+CREATE INDEX IF NOT EXISTS idx_features_assigned_to ON features(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_features_reporter ON features(reporter);
+CREATE INDEX IF NOT EXISTS idx_features_ticket_type ON features(ticket_type);
+CREATE INDEX IF NOT EXISTS idx_features_labels ON features USING GIN (labels);
+CREATE INDEX IF NOT EXISTS idx_features_start_date ON features(start_date);
+CREATE INDEX IF NOT EXISTS idx_features_end_date ON features(end_date);
 CREATE INDEX IF NOT EXISTS idx_feedback_project_id ON feedback(project_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_feature_id ON feedback(feature_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_account_id ON feedback(account_id);

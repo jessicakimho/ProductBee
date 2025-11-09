@@ -429,10 +429,304 @@ All routes should be tested for:
 - Specializations section in Permissions
 - Validation rules for profile updates
 
+### 6. ✅ Jira-Style Ticket Model Expansion (Phase 6)
+
+#### Feature Model Extensions
+**Location:** `/models/Feature.ts`
+
+**New Fields:**
+- `assigned_to` - User ID of assigned engineer (nullable)
+- `reporter` - User ID of ticket reporter (nullable)
+- `story_points` - Story points estimate (nullable, integer)
+- `labels` - Array of label strings
+- `acceptance_criteria` - Acceptance criteria text (nullable)
+- `ticket_type` - Ticket type: 'feature', 'bug', 'epic', 'story' (defaults to 'feature')
+
+#### Constants Extensions
+**Location:** `/lib/constants.ts`
+
+**New Constants:**
+- `TICKET_TYPES` - Enum for ticket types (FEATURE, BUG, EPIC, STORY)
+- `TicketType` - Type for ticket type values
+
+#### Database Schema Updates
+**Location:** `/supabase/schema.sql`
+
+**New Columns:**
+- `assigned_to UUID` - Foreign key to users table (nullable, ON DELETE SET NULL)
+- `reporter UUID` - Foreign key to users table (nullable, ON DELETE SET NULL)
+- `story_points INTEGER` - Story points estimate (nullable)
+- `labels TEXT[]` - Array of label strings (default empty array)
+- `acceptance_criteria TEXT` - Acceptance criteria text (nullable)
+- `ticket_type TEXT` - Check constraint for valid ticket types (defaults to 'feature')
+
+**New Indexes:**
+- Index on `assigned_to` for workload queries
+- Index on `reporter` for reporting queries
+- Index on `ticket_type` for filtering
+- GIN index on `labels` for array searches
+
+#### Validation Functions
+**Location:** `/lib/api/validation.ts`
+
+**New Functions:**
+- `validateTicketType()` - Validates ticket type values (feature, bug, epic, story)
+- `validateStoryPoints()` - Validates story points (non-negative integer or null)
+- `validateLabels()` - Validates labels array (array of strings)
+
+#### Gemini Prompt Updates
+**Location:** `/lib/prompts/roadmap.ts`
+
+**Updates:**
+- Extended roadmap generation prompt to include Jira-style fields:
+  - `ticketType` - AI determines appropriate type (feature, epic, story, bug)
+  - `storyPoints` - AI estimates using Fibonacci-like scale
+  - `labels` - AI generates relevant labels based on feature content
+  - `acceptanceCriteria` - AI generates clear acceptance criteria
+- Enhanced validation to check all new fields in AI responses
+- Added guidance for AI on when to use each ticket type
+
+#### API Routes
+**Location:** `/app/api/`
+
+**New Endpoints:**
+- `POST /api/feature/create` - Create feature/ticket manually with all Jira-style fields
+
+**Updated Endpoints:**
+- `POST /api/roadmap/generate` - Now includes Jira-style fields in generated features:
+  - Sets `reporter` to the user creating the roadmap
+  - Includes AI-generated `ticketType`, `storyPoints`, `labels`, `acceptanceCriteria`
+  - `assignedTo` remains null (not assigned during generation)
+- `PATCH /api/feature/:id` - Now supports updating all Jira-style fields
+- `GET /api/project/:id` - Now returns all Jira-style fields in feature responses
+
+#### API Types
+**Location:** `/types/api.ts`
+
+**New Types:**
+- `CreateFeatureRequest` - Request body for POST /api/feature/create
+- `CreateFeatureResponse` - Response for POST /api/feature/create
+
+**Updated Types:**
+- `FeatureResponse` - Added all Jira-style fields (assignedTo, reporter, storyPoints, labels, acceptanceCriteria, ticketType)
+- `UpdateFeatureRequest` - Added all Jira-style fields for updates
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- Create Feature endpoint documentation with all Jira-style fields
+- Updated Update Feature endpoint documentation with new fields
+- Updated FeatureResponse type definition with Jira-style fields
+- Updated Generate Roadmap endpoint documentation explaining AI-generated Jira-style fields
+
+### 7. ✅ Gantt Chart & Timeline View (Phase 7)
+
+#### Timeline Fields
+**Location:** `/models/Feature.ts`, `/supabase/schema.sql`
+
+**New Fields:**
+- `start_date` - Start date for the feature (DATE, nullable)
+- `end_date` - End date for the feature (DATE, nullable)
+- `duration` - Duration in days (INTEGER, nullable)
+
+**Database Schema:**
+- Added `start_date DATE`, `end_date DATE`, `duration INTEGER` columns to `features` table
+- Added indexes on `start_date` and `end_date` for performance
+
+#### Timeline Calculation Helper
+**Location:** `/lib/api/timeline.ts`
+
+**Functions:**
+- `calculateDuration()` - Calculate duration in days between two dates
+- `calculateEndDate()` - Calculate end date from start date and duration
+- `calculateStartDate()` - Calculate start date from end date and duration
+- `checkOverlap()` - Check if two date ranges overlap
+- `buildDependencyChains()` - Build dependency chains from features
+- `calculateCriticalPath()` - Calculate critical path using longest path algorithm
+- `calculateMilestones()` - Calculate milestones from feature completion dates
+- `calculateOverlaps()` - Calculate overlaps between features
+- `calculateTimeline()` - Calculate complete timeline for a set of features
+
+**Features:**
+- Critical path calculation using forward and backward pass
+- Dependency chain analysis
+- Milestone detection
+- Overlap detection
+- Automatic duration calculation from effort estimates
+
+#### API Route Updates
+**Location:** `/app/api/project/[id]/route.ts`
+
+**Updates:**
+- Extended `GET /api/project/[id]` to return timeline data:
+  - Features sorted by start date
+  - Dependency chains with depth information
+  - Critical path with total duration and dates
+  - Milestones grouped by completion date
+  - Feature overlaps
+- Features now include timeline fields: `startDate`, `endDate`, `duration`, `isOnCriticalPath`, `slackDays`
+
+#### API Types
+**Location:** `/types/api.ts`
+
+**Updated Types:**
+- `FeatureResponse` - Added timeline fields (startDate, endDate, duration, isOnCriticalPath, slackDays)
+- `GetProjectResponse` - Added `timeline` object with dependencyChains, criticalPath, milestones, overlaps
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- Timeline data in Get Project endpoint documentation
+- FeatureResponse type definition with timeline fields
+- Explanation of critical path, dependency chains, milestones, and overlaps
+
+### 8. ✅ Enhanced Team Workload & Assignment List (Phase 8)
+
+#### Available Team Members Endpoint
+**Location:** `/app/api/team/members/available/route.ts`
+
+**New Endpoint:**
+- `GET /api/team/members/available` - Returns all available team members excluding users on vacation
+- Filters out users who are currently on vacation
+- Returns same structure as `/api/team/members` but excludes vacationing users
+
+#### Workload Calculation Fix
+**Location:** `/lib/api/workload.ts`
+
+**Updates:**
+- Updated `calculateUserWorkload()` to actually calculate workload from assigned features
+- Now queries features where `assigned_to = userId` and `status != 'complete'`
+- Calculates ticket count and story point count from actual data
+- Previously returned 0 for all metrics (waiting for Phase 6), now fully functional
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- Get Available Team Members endpoint documentation
+- Updated workload calculation notes to reflect Phase 6 completion
+
+### 9. ✅ AI Smart Assignment Suggestions (Phase 9)
+
+#### AI Assignment Module
+**Location:** `/lib/ai/assignment.ts`
+
+**Features:**
+- `suggestAssignment()` function that uses Gemini AI to recommend assignees
+- Analyzes task description, required specialization, developer workload, vacation schedules, and past assignment history
+- Returns ranked list of engineers with reasoning and confidence scores
+
+#### Assignment Prompts
+**Location:** `/lib/prompts/assignment.ts`
+
+**Features:**
+- `getAssignmentSuggestionPrompt()` - Generates comprehensive prompts for AI assignment suggestions
+- Includes task context, team member data, workload metrics, and specialization requirements
+- `parseAssignmentSuggestionResponse()` - Parses and validates AI response with ranked suggestions
+
+#### Gemini Integration
+**Location:** `/lib/gemini.ts`
+
+**Added:**
+- `suggestAssignment()` function that calls Gemini API with assignment prompt
+- Error handling for API failures
+- Logging for debugging
+
+#### API Endpoint
+**Location:** `/app/api/feature/suggest-assignee/route.ts`
+
+**New Endpoint:**
+- `POST /api/feature/suggest-assignee` - Returns AI-generated assignment suggestions
+- Accepts either `featureId` or manual task description
+- Analyzes project history to infer required specialization
+- Returns top 3 recommended engineers with reasoning and confidence scores
+- Enforces account isolation and project access permissions
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- Suggest Assignee endpoint documentation
+- Request/response type definitions
+- Examples for both featureId and manual description usage
+
+### 10. ✅ Feedback & Proposal System (Phase 10)
+
+#### Feedback Model
+**Location:** `/models/Feedback.ts`
+
+**Features:**
+- Extends BaseModel with account isolation
+- Supports two types: `'comment'` and `'timeline_proposal'`
+- Includes AI analysis field for proposal insights
+- Status tracking: `'pending'`, `'approved'`, `'rejected'`, `'discussion'`
+
+#### AI Prompts
+**Location:** `/lib/prompts/feedback.ts` and `/lib/prompts/comparison.ts`
+
+**Feedback Analysis:**
+- `getProposalAnalysisPrompt()` - Analyzes engineer proposals for timeline impact
+- Returns structured analysis with summary, timeline impact, and recommended adjustments
+- `parseProposalAnalysisResponse()` - Handles response parsing with markdown cleanup
+
+**Roadmap Comparison:**
+- `getRoadmapComparisonPrompt()` - Compares original vs proposed roadmaps
+- Returns only changed features as JSON array
+- `parseRoadmapComparisonResponse()` - Parses comparison results
+
+#### Gemini Integration
+**Location:** `/lib/gemini.ts`
+
+**Added:**
+- `analyzeProposal()` - Analyzes engineer proposals using Gemini AI
+- `compareRoadmaps()` - Compares roadmaps to identify changes during approval
+
+#### API Endpoints
+**Location:** `/app/api/feedback/`
+
+**New Endpoints:**
+- `POST /api/feedback/create` - Create feedback (comment or proposal)
+  - Automatically analyzes proposals with AI
+  - Enforces account isolation
+  - All authenticated users can create feedback
+  
+- `POST /api/feedback/approve` - Approve feedback proposal (PM/Admin only)
+  - Compares roadmaps if proposed roadmap exists
+  - Updates feedback status to 'approved'
+  - Enforces account isolation and role-based permissions
+  
+- `POST /api/feedback/reject` - Reject feedback proposal (PM/Admin only)
+  - Updates feedback status to 'rejected'
+  - Enforces account isolation and role-based permissions
+
+#### Permission Enforcement
+**Location:** `/lib/api/permissions.ts`
+
+**Added:**
+- `requireProposalApproval()` - Ensures user is PM or Admin before approving/rejecting proposals
+- Integrates with account isolation checks
+
+#### Documentation Updates
+**Location:** `/docs/api.md`
+
+**Added:**
+- All three feedback endpoints documented
+- Request/response type definitions
+- Permission requirements
+- Account isolation details
+- AI analysis explanation
+
 ## Status
 ✅ **Backend infrastructure completed successfully**
 ✅ **Phase 4: Account Isolation & Permission Enforcement completed**
 ✅ **Phase 5: User Roles & Team Management completed**
+✅ **Phase 6: Jira-Style Ticket Model Expansion completed**
+✅ **Phase 7: Gantt Chart & Timeline View completed**
+✅ **Phase 8: Enhanced Team Workload & Assignment List completed**
+✅ **Phase 9: AI Smart Assignment Suggestions completed**
+✅ **Phase 10: Feedback & Proposal System completed**
 
-All backend work is complete and documented. The system includes robust error handling, type safety, permission checks, account isolation, user roles, team management, and comprehensive API routes for the AI Roadmap Dashboard.
+All backend work is complete and documented. The system includes robust error handling, type safety, permission checks, account isolation, user roles, team management, Jira-style ticket fields, timeline calculations, critical path analysis, AI-powered assignment suggestions, feedback and proposal management, and comprehensive API routes for the AI Roadmap Dashboard.
 

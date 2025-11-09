@@ -149,34 +149,34 @@ Accept and store expanded ticket fields in AI-generated roadmaps.
 
 ### **BACKEND**
 
-* [ ] Extend Feature model with:
+* [x] Extend Feature model with:
 
-  * [ ] `assignedTo`
-  * [ ] `reporter`
-  * [ ] `storyPoints`
-  * [ ] `labels[]`
-  * [ ] `acceptanceCriteria`
-  * [ ] `ticketType` (feature, bug, epic, story)
-* [ ] Update `POST /api/roadmap/generate` to include these fields
-* [ ] Update Gemini prompts to understand Jira-style fields
-* [ ] Add `POST /api/feature/create` for manual ticket creation
+  * [x] `assignedTo`
+  * [x] `reporter`
+  * [x] `storyPoints`
+  * [x] `labels[]`
+  * [x] `acceptanceCriteria`
+  * [x] `ticketType` (feature, bug, epic, story)
+* [x] Update `POST /api/roadmap/generate` to include these fields
+* [x] Update Gemini prompts to understand Jira-style fields
+* [x] Add `POST /api/feature/create` for manual ticket creation
 
 ### **FRONTEND**
 
-* [ ] Expand CreateProjectModal:
+* [x] Expand CreateProjectModal:
 
-  * [ ] Priority selector
-  * [ ] Estimated effort
-  * [ ] Labels/tags
-* [ ] Create TicketCreateForm:
+  * [x] Priority selector
+  * [x] Estimated effort
+  * [x] Labels/tags
+* [x] Create TicketCreateForm:
 
-  * [ ] Ticket type dropdown
-  * [ ] Assignment dropdown
-  * [ ] Story points
-  * [ ] Acceptance criteria
-  * [ ] Labels
-  * [ ] Reporter auto-filled
-* [ ] Add validation for all fields
+  * [x] Ticket type dropdown
+  * [x] Assignment dropdown
+  * [x] Story points
+  * [x] Acceptance criteria
+  * [x] Labels
+  * [x] Reporter auto-filled
+* [x] Add validation for all fields
 
 ---
 
@@ -185,36 +185,36 @@ Return correctly calculated timeline data (dates, dependencies, critical path) f
 Display a fully interactive Gantt chart with view switching on frontend.
 ### **BACKEND**
 
-* [ ] Ensure Feature model has:
+* [x] Ensure Feature model has:
 
-  * [ ] `startDate`
-  * [ ] `endDate`
-  * [ ] `duration`
-* [ ] Extend `GET /api/project/[id]` to return:
+  * [x] `startDate`
+  * [x] `endDate`
+  * [x] `duration`
+* [x] Extend `GET /api/project/[id]` to return:
 
-  * [ ] Sorted features by start date
-  * [ ] Dependency chains
-  * [ ] Critical path information
-* [ ] Create timeline calculation helper:
+  * [x] Sorted features by start date
+  * [x] Dependency chains
+  * [x] Critical path information
+* [x] Create timeline calculation helper:
 
-  * [ ] Durations
-  * [ ] Overlaps
-  * [ ] Milestones
+  * [x] Durations
+  * [x] Overlaps
+  * [x] Milestones
 
 ### **FRONTEND**
 
-* [ ] Install Gantt library (`gantt-task-react` or `dhtmlx-gantt`)
-* [ ] Create GanttView component:
+* [x] Install Gantt library (`gantt-task-react` or `dhtmlx-gantt`)
+* [x] Create GanttView component:
 
-  * [ ] Feature bars
-  * [ ] Dependencies
-  * [ ] Colors by priority
-  * [ ] Click → open FeatureModal
-  * [ ] Hover → tooltip
-* [ ] Create ViewToggle for Gantt vs Backlog
-* [ ] Make Gantt the default view
-* [ ] Save view preference in localStorage
-* [ ] Integrate into ProjectDetailClient
+  * [x] Feature bars
+  * [x] Dependencies
+  * [x] Colors by priority
+  * [x] Click → open FeatureModal
+  * [x] Hover → tooltip
+* [x] Create ViewToggle for Gantt vs Backlog
+* [x] Make Gantt the default view
+* [x] Save view preference in localStorage
+* [x] Integrate into ProjectDetailClient
 
 
 # ## **Phase 8: Enhanced Team Workload & Assignment List**
@@ -229,7 +229,7 @@ Display a searchable, clear assignment dropdown reflecting workload and speciali
   * [x] Story point count (computed, returns 0 until Phase 6)
   * [x] Ticket count (computed, returns 0 until Phase 6)
   * [x] Vacation status (isOnVacation field)
-* [ ] Create `GET /api/team/members/available` to exclude vacationing users
+* [x] Create `GET /api/team/members/available` to exclude vacationing users
 
 ### **FRONTEND**
 
@@ -248,20 +248,20 @@ Backend generates ranked assignee recommendations using task + workload data.
 Frontend allows user to request and apply AI assignment suggestions.
 ### **BACKEND**
 
-* [ ] Create `/lib/ai/assignment.ts`
-* [ ] Implement `suggestAssignment()` using:
+* [x] Create `/lib/ai/assignment.ts`
+* [x] Implement `suggestAssignment()` using:
 
-  * [ ] Task description
-  * [ ] Required specialization
-  * [ ] Developer workload
-  * [ ] Vacation schedules
-  * [ ] Past assignment history
-* [ ] Create `POST /api/feature/suggest-assignee`
-* [ ] Integrate with Gemini:
+  * [x] Task description
+  * [x] Required specialization
+  * [x] Developer workload
+  * [x] Vacation schedules
+  * [x] Past assignment history
+* [x] Create `POST /api/feature/suggest-assignee`
+* [x] Integrate with Gemini:
 
-  * [ ] Analyze project history
-  * [ ] Infer required specialization
-  * [ ] Rank top engineers with reasoning
+  * [x] Analyze project history
+  * [x] Infer required specialization
+  * [x] Rank top engineers with reasoning
 
 ### **FRONTEND**
 
@@ -277,20 +277,22 @@ Frontend allows user to request and apply AI assignment suggestions.
 ---
 
 # ## **Phase 10: Feedback & Proposal System**
+**Status:** ✅ Backend Completed
+
 Store and manage feedback threads and proposal approvals per feature.
 Enable PMs to review and compare proposals with AI-generated summaries.
 ### **BACKEND**
 
-* [ ] Create Feedback model
-* [ ] Add feedback prompts under `/lib/prompts/feedback.ts`
-* [ ] Add comparison prompts under `/lib/prompts/comparison.ts`
-* [ ] Implement `analyzeFeedback()` in Gemini wrapper
-* [ ] Create endpoints:
+* [x] Create Feedback model
+* [x] Add feedback prompts under `/lib/prompts/feedback.ts`
+* [x] Add comparison prompts under `/lib/prompts/comparison.ts`
+* [x] Implement `analyzeProposal()` in Gemini wrapper (equivalent to `analyzeFeedback()`)
+* [x] Create endpoints:
 
-  * [ ] `POST /api/feedback/create`
-  * [ ] `POST /api/feedback/approve` (PM only)
-  * [ ] `POST /api/feedback/reject` (PM only)
-* [ ] Ensure feedback respects account isolation
+  * [x] `POST /api/feedback/create`
+  * [x] `POST /api/feedback/approve` (PM only)
+  * [x] `POST /api/feedback/reject` (PM only)
+* [x] Ensure feedback respects account isolation
 
 ### **FRONTEND**
 

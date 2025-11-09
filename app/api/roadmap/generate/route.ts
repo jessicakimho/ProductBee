@@ -91,6 +91,13 @@ export async function POST(request: NextRequest) {
       status: 'backlog',
       original_index: index, // Store original index for dependency resolution
       original_depends_on: feature.dependsOn || [], // Store dependency indices
+      // Jira-style fields (Phase 6)
+      ticket_type: feature.ticketType || 'feature',
+      story_points: feature.storyPoints ?? null,
+      labels: feature.labels || [],
+      acceptance_criteria: feature.acceptanceCriteria || null,
+      assigned_to: null, // Not assigned during roadmap generation
+      reporter: user.id, // Set reporter to the user creating the roadmap
     }))
 
     const { data: createdFeatures, error: featuresError } = await supabase
@@ -134,6 +141,13 @@ export async function POST(request: NextRequest) {
       dependsOn: feature.depends_on || [],
       status: feature.status,
       createdAt: feature.created_at,
+      // Jira-style fields (Phase 6)
+      assignedTo: feature.assigned_to || null,
+      reporter: feature.reporter || null,
+      storyPoints: feature.story_points ?? null,
+      labels: feature.labels || [],
+      acceptanceCriteria: feature.acceptance_criteria || null,
+      ticketType: feature.ticket_type || 'feature',
     }))
 
     const response: GenerateRoadmapResponse = {

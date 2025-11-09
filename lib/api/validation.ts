@@ -140,6 +140,48 @@ export function validateRiskLevel(riskLevel: string): void {
 }
 
 /**
+ * Validate ticket type (Jira-style)
+ */
+export function validateTicketType(ticketType: string | null | undefined): void {
+  if (ticketType === null || ticketType === undefined) {
+    return // null/undefined is valid (defaults to 'feature')
+  }
+  const validTypes = ['feature', 'bug', 'epic', 'story']
+  if (!validTypes.includes(ticketType)) {
+    throw APIErrors.badRequest(`Invalid ticket type. Must be one of: ${validTypes.join(', ')}`)
+  }
+}
+
+/**
+ * Validate story points (must be positive integer or null)
+ */
+export function validateStoryPoints(storyPoints: number | null | undefined): void {
+  if (storyPoints === null || storyPoints === undefined) {
+    return // null/undefined is valid
+  }
+  if (typeof storyPoints !== 'number' || storyPoints < 0 || !Number.isInteger(storyPoints)) {
+    throw APIErrors.badRequest('Story points must be a non-negative integer or null')
+  }
+}
+
+/**
+ * Validate labels array
+ */
+export function validateLabels(labels: string[] | null | undefined): void {
+  if (labels === null || labels === undefined) {
+    return // null/undefined is valid
+  }
+  if (!Array.isArray(labels)) {
+    throw APIErrors.badRequest('Labels must be an array')
+  }
+  for (const label of labels) {
+    if (typeof label !== 'string') {
+      throw APIErrors.badRequest('All labels must be strings')
+    }
+  }
+}
+
+/**
  * Sanitize string input (basic XSS prevention)
  */
 export function sanitizeString(input: string): string {

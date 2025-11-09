@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
 import { ArrowLeft, AlertCircle } from 'lucide-react'
@@ -9,6 +9,9 @@ import { useProject } from '@/hooks/useProject'
 import { useFeature } from '@/hooks/useFeature'
 import FeatureCard from './FeatureCard'
 import FeatureModal from './FeatureModal'
+import TicketCreateForm from './TicketCreateForm'
+import GanttView from './GanttView'
+import ViewToggle, { type ViewType } from './ViewToggle'
 import type { GetProjectResponse, FeatureResponse } from '@/types'
 
 interface ProjectDetailClientProps {
@@ -38,6 +41,24 @@ export default function ProjectDetailClient({
   const router = useRouter()
   const { user } = useUser()
   const [selectedFeature, setSelectedFeature] = useState<FeatureResponse | null>(null)
+  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false)
+  
+  // View state with localStorage persistence (default to 'gantt')
+  const [currentView, setCurrentView] = useState<ViewType>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('projectViewPreference')
+      return (saved === 'gantt' || saved === 'backlog') ? saved : 'gantt'
+    }
+    return 'gantt'
+  })
+
+  // Save view preference to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('projectViewPreference', currentView)
+    }
+  }, [currentView])
+
   const projectId = initialData.project._id || initialData.project.id
   const { projectData, refetch } = useProject(projectId)
   const { updateFeatureStatus } = useFeature()
@@ -119,43 +140,61 @@ export default function ProjectDetailClient({
           </div>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Features
           </h2>
+          <div className="flex items-center gap-4">
+            <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+            {!isViewer && (
+              <button
+                onClick={() => setIsCreateTicketOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                + Create Ticket
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {columns.map((column) => {
-            const features = getFeaturesByStatus(column.id)
-            return (
-              <div
-                key={column.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700"
-              >
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                  {column.title} ({features.length})
-                </h3>
-                <div className="space-y-3 min-h-[200px]">
-                  {features.map((feature) => (
-                    <FeatureCard
-                      key={feature._id || feature.id}
-                      feature={feature}
-                      onClick={() => handleFeatureClick(feature)}
-                      canEdit={canEdit}
-                      onStatusChange={canEdit ? (featureId, newStatus) => handleFeatureUpdate(featureId, newStatus) : undefined}
-                    />
-                  ))}
-                  {features.length === 0 && (
-                    <div className="text-center py-8 text-gray-400 text-sm">
-                      No features
-                    </div>
-                  )}
+        {currentView === 'gantt' ? (
+          <GanttView
+            features={displayData.features}
+            onTaskClick={handleFeatureClick}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {columns.map((column) => {
+              const features = getFeaturesByStatus(column.id)
+              return (
+                <div
+                  key={column.id}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700"
+                >
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                    {column.title} ({features.length})
+                  </h3>
+                  <div className="space-y-3 min-h-[200px]">
+                    {features.map((feature) => (
+                      <FeatureCard
+                        key={feature._id || feature.id}
+                        feature={feature}
+                        onClick={() => handleFeatureClick(feature)}
+                        canEdit={canEdit}
+                        onStatusChange={canEdit ? (featureId, newStatus) => handleFeatureUpdate(featureId, newStatus) : undefined}
+                      />
+                    ))}
+                    {features.length === 0 && (
+                      <div className="text-center py-8 text-gray-400 text-sm">
+                        No features
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </main>
 
       {selectedFeature && (
@@ -174,6 +213,15 @@ export default function ProjectDetailClient({
           }}
         />
       )}
+
+      <TicketCreateForm
+        isOpen={isCreateTicketOpen}
+        onClose={() => setIsCreateTicketOpen(false)}
+        projectId={displayData.project._id || displayData.project.id}
+        onSuccess={() => {
+          refetch()
+        }}
+      />
     </div>
   )
 }
