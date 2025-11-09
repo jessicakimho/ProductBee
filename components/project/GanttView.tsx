@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { Gantt, ViewMode } from 'gantt-task-react'
 import type { Task } from 'gantt-task-react'
 import 'gantt-task-react/dist/index.css'
@@ -27,14 +27,8 @@ const defaultColor = '#6b7280' // gray-500
 const TooltipContent = ({ task, fontSize, fontFamily }: { task: Task; fontSize: string; fontFamily: string }) => {
   return (
     <div className="bg-white p-3 rounded-lg shadow-soft">
-      <div className="font-semibold text-[#0d0d0d] mb-1" style={{ fontSize, fontFamily }}>
+      <div className="font-semibold text-[#0d0d0d]" style={{ fontSize, fontFamily }}>
         {task.name}
-      </div>
-      <div className="text-sm text-[#404040]">
-        {task.start.toLocaleDateString()} - {task.end.toLocaleDateString()}
-      </div>
-      <div className="text-sm text-[#404040]">
-        Progress: {task.progress}%
       </div>
     </div>
   )
@@ -117,6 +111,68 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
     }
   }
 
+  // Hide Name/From/To header row and elements after render, and hide arrows
+  useEffect(() => {
+    const hideElements = () => {
+      const container = document.querySelector('.gantt-container')
+      if (container) {
+        // Hide header rows
+        const headerRows = container.querySelectorAll('thead tr:first-child')
+        headerRows.forEach((row) => {
+          const rowElement = row as HTMLElement
+          rowElement.style.display = 'none'
+        })
+
+        // Hide divs with _1nBOt class (the container for Name/From/To)
+        const nameContainers = container.querySelectorAll('div[class*="_1nBOt"]')
+        nameContainers.forEach((el) => {
+          const element = el as HTMLElement
+          element.style.display = 'none'
+        })
+
+        // Hide divs containing Name/From/To text
+        const allDivs = container.querySelectorAll('div')
+        allDivs.forEach((div) => {
+          const text = div.textContent?.trim()
+          if (text === 'Name' || text === 'From' || text === 'To' || text === '&nbsp;Name' || text === '&nbsp;From' || text === '&nbsp;To') {
+            const element = div as HTMLElement
+            element.style.display = 'none'
+            // Also hide parent if it's the container
+            const parent = div.parentElement
+            if (parent && parent.classList.toString().includes('_1nBOt')) {
+              parent.style.display = 'none'
+            }
+          }
+        })
+
+        // Hide dependency arrows (SVG paths and lines)
+        const svgElements = container.querySelectorAll('svg path, svg line')
+        svgElements.forEach((el) => {
+          const element = el as HTMLElement
+          // Check if it's an arrow (usually has specific attributes or is in a certain position)
+          const d = element.getAttribute('d')
+          const markerEnd = element.getAttribute('marker-end')
+          if (markerEnd || (d && d.includes('L'))) {
+            element.style.display = 'none'
+            element.style.visibility = 'hidden'
+          }
+        })
+      }
+    }
+
+    // Run immediately and also after delays to catch dynamically rendered content
+    hideElements()
+    const timer = setTimeout(hideElements, 100)
+    const timer2 = setTimeout(hideElements, 500)
+    const timer3 = setTimeout(hideElements, 1000)
+
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+    }
+  }, [tasks])
+
   if (tasks.length === 0) {
     return (
       <div className="bg-white rounded-card shadow-soft p-8">
@@ -129,8 +185,8 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
   }
 
   return (
-    <div className="bg-white rounded-card shadow-soft overflow-x-auto">
-      <div className="p-4">
+    <div className="bg-white rounded-card shadow-soft overflow-x-auto overflow-y-auto">
+      <div className="w-full h-full p-6">
         <Gantt
           tasks={tasks}
           viewMode={ViewMode.Month}
@@ -139,14 +195,16 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
           onTaskDelete={() => {}} // Read-only for now
           onProgressChange={() => {}} // Read-only for now
           onDoubleClick={handleTaskClick}
-          onClick={handleTaskClick}
-          listCellWidth=""
-          columnWidth={65}
-          rowHeight={50}
-          ganttHeight={Math.max(400, tasks.length * 50 + 100)}
+          onClick={() => {}} // Disable single click
+          listCellWidth="0"
+          columnWidth={180}
+          rowHeight={80}
+          ganttHeight={Math.max(600, tasks.length * 80 + 200)}
           preStepsCount={1}
-          todayColor="rgba(59, 130, 246, 0.3)" // blue with opacity
+          todayColor="rgba(59, 130, 246, 0.08)"
           TooltipContent={TooltipContent}
+          fontSize="14"
+          fontFamily="inherit"
         />
       </div>
     </div>

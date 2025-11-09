@@ -237,7 +237,7 @@ export default function ProjectDetailClient({
 
         {/* Main Content Area - Roadmap */}
         <main className="flex-1 overflow-y-auto bg-white">
-          <div className="p-8">
+          <div className="p-4">
             {/* Roadmap View */}
             {currentView === 'gantt' ? (
               <GanttView

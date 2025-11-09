@@ -55,3 +55,184 @@ body {
   }
 }
 
+/* Gantt Chart Custom Styles */
+.gantt-container {
+  width: 100% !important;
+  font-size: 14px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+}
+
+/* Universal rule to hide first 3 columns in any table within gantt container */
+.gantt-container * table th:nth-of-type(1),
+.gantt-container * table th:nth-of-type(2),
+.gantt-container * table th:nth-of-type(3),
+.gantt-container * table td:nth-of-type(1),
+.gantt-container * table td:nth-of-type(2),
+.gantt-container * table td:nth-of-type(3) {
+  display: none !important;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  visibility: hidden !important;
+}
+
+.gantt-table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+/* Hide the task list panel on the left */
+.gantt-task-list {
+  display: none !important;
+  width: 0 !important;
+}
+
+.gantt-task-list-header {
+  display: none !important;
+  width: 0 !important;
+}
+
+.gantt-task-list-name {
+  display: none !important;
+}
+
+.gantt-task-list-cell {
+  display: none !important;
+  width: 0 !important;
+}
+
+.gantt-task-list-wrapper {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* Hide the Name/From/To header row completely */
+.gantt-container thead tr:first-child {
+  display: none !important;
+}
+
+/* Hide Name/From/To elements with dynamic class names */
+.gantt-container div[class*="_1nBOt"] {
+  display: none !important;
+}
+
+.gantt-container div[class*="_WuQ0f"] {
+  display: none !important;
+}
+
+.gantt-table-header {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #0d0d0d !important;
+  padding: 20px 16px !important;
+  background-color: #fafafa !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  text-align: center !important;
+}
+
+.gantt-table-body {
+  font-size: 14px !important;
+  background-color: white !important;
+}
+
+.gantt-table-cell {
+  font-size: 14px !important;
+  padding: 20px 16px !important;
+  border-right: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* Hide task names and dates on bars */
+.gantt-task-content {
+  display: none !important;
+}
+
+.gantt-task-bar {
+  height: 36px !important;
+  border-radius: 6px !important;
+  margin: 12px 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.gantt-task-bar:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+.gantt-task-progress {
+  border-radius: 6px !important;
+}
+
+/* Add spacing between rows */
+.gantt-table-row {
+  height: 80px !important;
+}
+
+/* Improve calendar scaling with whitespace */
+.gantt-table-header-row {
+  height: 60px !important;
+}
+
+.gantt-table-body-row {
+  height: 80px !important;
+}
+
+/* Hide dependency arrows */
+.gantt-arrow {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.gantt-container svg path[marker-end],
+.gantt-container svg line[marker-end],
+.gantt-container svg path[marker-start],
+.gantt-container svg line[marker-start] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Grid lines - soft gray */
+.gantt-table-cell {
+  border-color: #f0f0f0 !important;
+}
+
+.gantt-table-header {
+  border-color: #e5e5e5 !important;
+}
+
+/* Today indicator */
+.gantt-today {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+  border-left: 2px solid rgba(59, 130, 246, 0.3) !important;
+  border-right: 2px solid rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Selection handles - subtle */
+.gantt-task-bar::before,
+.gantt-task-bar::after {
+  content: '' !important;
+  position: absolute !important;
+  width: 6px !important;
+  height: 100% !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 2px !important;
+  cursor: ew-resize !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.gantt-task-bar:hover::before {
+  left: 0 !important;
+  opacity: 1 !important;
+}
+
+.gantt-task-bar:hover::after {
+  right: 0 !important;
+  opacity: 1 !important;
+}
+
