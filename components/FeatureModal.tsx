@@ -148,30 +148,31 @@ export default function FeatureModal({
     }
   }
 
-  const priorityColors: Record<string, string> = {
-    P0: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    P1: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    P2: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  const priorityStyles: Record<string, string> = {
+    P0: 'bg-white/40',
+    P1: 'bg-white/30',
+    P2: 'bg-white/20',
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="card w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="sticky top-0 card border-b-0 rounded-b-none px-8 py-6" style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              <h2 className="text-2xl font-semibold tracking-tight mb-3">
                 {feature.title}
               </h2>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    priorityColors[feature.priority] || 'bg-gray-100 text-gray-800'
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
+                    priorityStyles[feature.priority] || 'bg-white/30'
                   }`}
+                  style={{ color: 'var(--text-muted)' }}
                 >
                   {feature.priority}
                 </span>
-                <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
                   <Clock className="w-4 h-4" />
                   <span>{feature.effortEstimateWeeks} weeks</span>
                 </div>
@@ -179,25 +180,26 @@ export default function FeatureModal({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              className="p-2 rounded-lg hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--text-muted)' }}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        <div className="flex-1 overflow-y-auto p-8">
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-3 tracking-tight">
               Description
             </h3>
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>
               {feature.description}
             </p>
           </div>
 
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2 tracking-tight">
               <MessageSquare className="w-5 h-5" />
               Feedback Thread
             </h3>
@@ -209,61 +211,53 @@ export default function FeatureModal({
             />
           </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-            <div className="flex gap-2 mb-4">
+          <div className="border-t pt-8" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex gap-3 mb-6">
               <button
                 onClick={() => setActiveTab('comment')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'comment'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                className={activeTab === 'comment' ? 'active' : ''}
               >
                 Add Comment
               </button>
               <button
                 onClick={() => setActiveTab('proposal')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'proposal'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                className={activeTab === 'proposal' ? 'active' : ''}
               >
                 Submit Proposal
               </button>
             </div>
 
             {activeTab === 'comment' ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full"
                   placeholder="Add your comment..."
                 />
                 <button
                   onClick={() => handleSubmitFeedback('comment')}
                   disabled={isSubmitting || !comment.trim()}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" />
                   Submit Comment
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <textarea
                   value={proposal}
                   onChange={(e) => setProposal(e.target.value)}
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full"
                   placeholder="Describe your proposal for timeline changes, feature modifications, etc..."
                 />
                 <button
                   onClick={() => handleSubmitFeedback('proposal')}
                   disabled={isSubmitting || !proposal.trim()}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2"
                 >
                   <Send className="w-4 h-4" />
                   Submit Proposal

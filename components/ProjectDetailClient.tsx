@@ -110,20 +110,21 @@ export default function ProjectDetailClient({
     return projectData.features.filter((f) => f.status === status)
   }
 
-  const riskColors: Record<string, string> = {
-    low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    high: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  const riskStyles: Record<string, string> = {
+    low: 'bg-white/60',
+    medium: 'bg-white/40',
+    high: 'bg-white/20',
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16 gap-4">
+    <div className="min-h-screen">
+      <nav className="border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex items-center h-20 gap-4">
             <a
               href="/dashboard"
-              className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="flex items-center gap-2 transition-opacity hover:opacity-70"
+              style={{ color: 'var(--text-muted)' }}
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Dashboard
@@ -132,56 +133,57 @@ export default function ProjectDetailClient({
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
+      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
+        <div className="mb-12">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-4xl font-semibold tracking-tight mb-3">
                 {projectData.project.name}
               </h1>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p style={{ color: 'var(--text-muted)' }}>
                 {projectData.project.description}
               </p>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                riskColors[projectData.project.roadmap.riskLevel.toLowerCase()] ||
-                'bg-gray-100 text-gray-800'
+              className={`px-4 py-2 rounded-full text-sm font-medium ${
+                riskStyles[projectData.project.roadmap.riskLevel.toLowerCase()] ||
+                'bg-white/60'
               }`}
+              style={{ color: 'var(--text-muted)' }}
             >
               {projectData.project.roadmap.riskLevel} Risk
             </span>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+          <div className="card p-8">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 tracking-tight">
               <AlertCircle className="w-5 h-5" />
               Roadmap Summary
             </h2>
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            <p className="whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>
               {projectData.project.roadmap.summary}
             </p>
           </div>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="mb-8">
+          <h2 className="text-3xl font-semibold tracking-tight">
             Features
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {columns.map((column) => {
             const features = getFeaturesByStatus(column.id)
             return (
               <div
                 key={column.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700"
+                className="card p-6"
               >
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="font-semibold mb-6 tracking-tight">
                   {column.title} ({features.length})
                 </h3>
-                <div className="space-y-3 min-h-[200px]">
+                <div className="space-y-4 min-h-[200px]">
                   {features.map((feature) => (
                     <FeatureCard
                       key={feature._id}
@@ -190,7 +192,7 @@ export default function ProjectDetailClient({
                     />
                   ))}
                   {features.length === 0 && (
-                    <div className="text-center py-8 text-gray-400 text-sm">
+                    <div className="text-center py-8 text-sm" style={{ color: 'var(--text-muted)' }}>
                       No features
                     </div>
                   )}

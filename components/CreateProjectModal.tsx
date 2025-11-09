@@ -59,25 +59,27 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 card border-b-0 rounded-b-none px-8 py-6 flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="text-2xl font-semibold tracking-tight">
             Create New Project
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="p-2 rounded-lg hover:opacity-70 transition-opacity"
+            style={{ color: 'var(--text-muted)' }}
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div>
             <label
               htmlFor="projectName"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium mb-3"
+              style={{ color: 'var(--text-muted)' }}
             >
               Project Name
             </label>
@@ -86,7 +88,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
               type="text"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full"
               placeholder="Enter project name"
               required
             />
@@ -95,7 +97,8 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
           <div>
             <label
               htmlFor="projectDescription"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium mb-3"
+              style={{ color: 'var(--text-muted)' }}
             >
               Project Description
             </label>
@@ -104,24 +107,22 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
               value={projectDescription}
               onChange={(e) => setProjectDescription(e.target.value)}
               rows={6}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full"
               placeholder="Describe your project in detail..."
               required
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? 'Creating...' : 'Create Project'}
             </button>

@@ -4,7 +4,10 @@ import './globals.css'
 import { UserProvider } from '@auth0/nextjs-auth0/client'
 import { Toaster } from 'react-hot-toast'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
 
 export const metadata: Metadata = {
   title: 'ProductBee - AI Roadmap Collaboration',

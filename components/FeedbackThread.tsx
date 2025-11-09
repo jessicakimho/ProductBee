@@ -30,8 +30,8 @@ export default function FeedbackThread({
 }: FeedbackThreadProps) {
   if (feedback.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+      <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+        <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-40" />
         <p>No feedback yet. Be the first to comment!</p>
       </div>
     )
@@ -42,15 +42,15 @@ export default function FeedbackThread({
       {feedback.map((item) => (
         <div
           key={item._id}
-          className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+          className="card p-6"
         >
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="font-medium text-gray-900 dark:text-white">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <User className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              <span className="font-medium">
                 {item.userId.name}
               </span>
-              <span className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              <span className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white/40" style={{ color: 'var(--text-muted)' }}>
                 {item.type}
               </span>
             </div>
@@ -59,14 +59,14 @@ export default function FeedbackThread({
                 <>
                   <button
                     onClick={() => onApprove?.(item._id)}
-                    className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900 rounded"
+                    className="p-2 rounded-lg hover:opacity-70 transition-opacity"
                     title="Approve"
                   >
                     <CheckCircle className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onReject?.(item._id)}
-                    className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded"
+                    className="p-2 rounded-lg hover:opacity-70 transition-opacity"
                     title="Reject"
                   >
                     <XCircle className="w-5 h-5" />
@@ -74,35 +74,35 @@ export default function FeedbackThread({
                 </>
               )}
               {item.status === 'approved' && (
-                <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
                   <CheckCircle className="w-4 h-4" />
-                  <span className="text-xs">Approved</span>
+                  <span>Approved</span>
                 </span>
               )}
               {item.status === 'rejected' && (
-                <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
+                <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
                   <XCircle className="w-4 h-4" />
-                  <span className="text-xs">Rejected</span>
+                  <span>Rejected</span>
                 </span>
               )}
             </div>
           </div>
-          <p className="text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap">
+          <p className="mb-4 whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>
             {item.content}
           </p>
           {item.aiAnalysis && (
-            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-              <p className="text-xs font-medium text-blue-900 dark:text-blue-200 mb-1">
+            <div className="mt-4 p-4 card bg-white/50">
+              <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
                 AI Analysis:
               </p>
-              <p className="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-wrap">
+              <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>
                 {typeof item.aiAnalysis === 'string'
                   ? JSON.parse(item.aiAnalysis).summary || item.aiAnalysis
                   : item.aiAnalysis}
               </p>
             </div>
           )}
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
             <Clock className="w-3 h-3" />
             <span>{new Date(item.createdAt).toLocaleString()}</span>
           </div>
