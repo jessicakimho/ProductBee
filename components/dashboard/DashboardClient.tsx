@@ -3,25 +3,22 @@
 import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { Plus } from 'lucide-react'
+import { Plus, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { ROLES } from '@/lib/constants'
 import ProjectCard from './ProjectCard'
 import CreateProjectModal from '../modals/CreateProjectModal'
 import type { ProjectResponse } from '@/types'
 
-// Bento Grid Component
+/* ---------------------- BENTO GRID COMPONENT ---------------------- */
 function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
-  // Organize projects by risk level
   const organizedProjects = useMemo(() => {
     const highRisk = projects.filter(p => (p.roadmap?.riskLevel?.toLowerCase() || 'low') === 'high')
     const mediumRisk = projects.filter(p => (p.roadmap?.riskLevel?.toLowerCase() || 'low') === 'medium')
     const lowRisk = projects.filter(p => (p.roadmap?.riskLevel?.toLowerCase() || 'low') === 'low')
-
     return { highRisk, mediumRisk, lowRisk }
   }, [projects])
 
-  // Generate gradient for fallback
   const getProjectGradient = (id: string) => {
     const gradients = [
       'from-blue-200 via-blue-300 to-green-200',
@@ -34,7 +31,6 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
     return gradients[index]
   }
 
-  // Render a project tile
   const renderProjectTile = (
     project: ProjectResponse, 
     size: 'large' | 'medium-vertical' | 'medium-square' | 'small',
@@ -42,7 +38,6 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
   ) => {
     const imageUrl = project.roadmap?.imageUrl
     const gradient = getProjectGradient(project._id || project.id || '')
-    
     const sizeClasses = {
       large: gridClass || 'col-span-2',
       'medium-vertical': gridClass || 'col-span-1',
@@ -56,9 +51,11 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
         href={`/project/${project._id || project.id}`}
         className={`${sizeClasses[size]} h-[32vw] bg-white rounded-[18px] shadow-soft overflow-hidden cursor-pointer hover:shadow-lg transition-all group block`}
       >
-        <div className={`w-full h-full relative overflow-hidden rounded-[18px] ${
-          !imageUrl ? `bg-gradient-to-br ${gradient}` : ''
-        }`}>
+        <div
+          className={`w-full h-full relative overflow-hidden rounded-[18px] ${
+            !imageUrl ? `bg-gradient-to-br ${gradient}` : ''
+          }`}
+        >
           {imageUrl && (
             <Image
               src={imageUrl}
@@ -69,130 +66,77 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
             />
           )}
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent z-10 rounded-b-[18px]">
-            <p className="text-white font-medium line-clamp-2 text-sm">
-              {project.name}
-            </p>
+            <p className="text-white font-medium line-clamp-2 text-sm">{project.name}</p>
           </div>
         </div>
       </a>
     )
   }
 
-  // Build the grid layout matching the bento-box pattern
-  // High risk = Large (col-span-2), Medium risk = Medium (col-span-1), Low risk = Small (col-span-1)
   const gridItems: Array<{ project: ProjectResponse; size: 'large' | 'medium-vertical' | 'medium-square' | 'small'; gridClass: string }> = []
-  
-  // First, assign high risk projects to large tiles
   organizedProjects.highRisk.forEach((project, index) => {
-    if (index === 0) {
-      // First high risk gets large tile (col-span-2)
-      gridItems.push({
-        project,
-        size: 'large',
-        gridClass: 'col-span-2'
-      })
-    } else {
-      // Additional high risk projects get medium tiles
-      gridItems.push({
-        project,
-        size: 'medium-square',
-        gridClass: 'col-span-1'
-      })
-    }
-  })
-  
-  // Then, assign medium risk projects to medium tiles
-  organizedProjects.mediumRisk.forEach((project, index) => {
-    if (index === 0 && gridItems.length === 0) {
-      // If no high risk, first medium gets large
-      gridItems.push({
-        project,
-        size: 'large',
-        gridClass: 'col-span-2'
-      })
-    } else {
-      // Medium risk get square tiles (col-span-1)
-      gridItems.push({
-        project,
-        size: 'medium-square',
-        gridClass: 'col-span-1'
-      })
-    }
-  })
-  
-  // Finally, assign low risk projects to small tiles
-  organizedProjects.lowRisk.forEach((project) => {
     gridItems.push({
       project,
-      size: 'small',
-      gridClass: 'col-span-1'
+      size: index === 0 ? 'large' : 'medium-square',
+      gridClass: index === 0 ? 'col-span-2' : 'col-span-1',
     })
+  })
+  organizedProjects.mediumRisk.forEach((project, index) => {
+    gridItems.push({
+      project,
+      size: gridItems.length === 0 && index === 0 ? 'large' : 'medium-square',
+      gridClass: gridItems.length === 0 && index === 0 ? 'col-span-2' : 'col-span-1',
+    })
+  })
+  organizedProjects.lowRisk.forEach((project) => {
+    gridItems.push({ project, size: 'small', gridClass: 'col-span-1' })
   })
 
   return (
     <div className="grid grid-cols-3 gap-1.5">
-      {gridItems.map(({ project, size, gridClass }) => 
+      {gridItems.map(({ project, size, gridClass }) =>
         renderProjectTile(project, size, gridClass)
       )}
     </div>
   )
 }
 
+/* ---------------------- DASHBOARD CLIENT ---------------------- */
 interface DashboardClientProps {
   projects?: ProjectResponse[]
   userRole?: string
 }
 
-export default function DashboardClient({ projects: initialProjects = [], userRole }: DashboardClientProps) {
+export default function DashboardClient({
+  projects: initialProjects = [],
+  userRole,
+}: DashboardClientProps) {
   const { user, isLoading } = useUser()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [projects, setProjects] = useState<ProjectResponse[]>(initialProjects || [])
-
-  // Check if user can create projects (PM or Admin only)
   const canCreateProject = userRole === ROLES.PM || userRole === ROLES.ADMIN
 
-  // Real-time subscription for projects
+  // Realtime updates
   useEffect(() => {
-    // Ensure we always have an array
-    if (Array.isArray(initialProjects)) {
-      setProjects(initialProjects)
-    } else {
-      setProjects([])
-    }
+    if (Array.isArray(initialProjects)) setProjects(initialProjects)
+    else setProjects([])
 
     const projectsChannel = supabase
       .channel('dashboard-projects')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'projects',
-        },
-        async () => {
-          // Refresh projects list when changes occur
-          try {
-            const response = await fetch('/api/projects')
-            const responseData = await response.json()
-            
-            if (response.ok && responseData.success) {
-              // Handle wrapped response: { success: true, data: { projects: [...] } }
-              const data = responseData.data
-              // Ensure we always set an array
-              if (Array.isArray(data?.projects)) {
-                setProjects(data.projects)
-              } else {
-                setProjects([])
-              }
-            }
-          } catch (error) {
-            console.error('Error refreshing projects:', error)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, async () => {
+        try {
+          const response = await fetch('/api/projects')
+          const responseData = await response.json()
+          if (response.ok && responseData.success) {
+            const data = responseData.data
+            setProjects(Array.isArray(data?.projects) ? data.projects : [])
           }
+        } catch (error) {
+          console.error('Error refreshing projects:', error)
         }
-      )
+      })
       .subscribe()
 
-    // Cleanup subscription on unmount
     return () => {
       supabase.removeChannel(projectsChannel)
     }
@@ -208,37 +152,50 @@ export default function DashboardClient({ projects: initialProjects = [], userRo
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
-      {/* Top Header */}
+      {/* Header */}
       <header className="bg-[#f5f5f5] border-b border-[#d9d9d9] h-16 flex items-center px-6">
         <div className="flex items-center gap-3 flex-1">
-          {/* Bee Logo - Rounded Container */}
           <div className="w-6 h-6 relative flex-shrink-0 rounded-md overflow-hidden">
-            <Image
-              src="/bee_logo.png"
-              alt="ProductBee Logo"
-              fill
-              className="object-contain"
-              sizes="24px"
-            />
+            <Image src="/bee_logo.png" alt="ProductBee Logo" fill className="object-contain" sizes="24px" />
           </div>
-          <span className="text-[#0d0d0d] text-sm">Is...</span>
-        </div>
-        <div className="flex items-center gap-4">
-          {user && (
-            <div className="px-4 py-2 bg-[#a855f7] rounded-full text-white text-sm font-medium">
-              {user.name || user.email}
-            </div>
-          )}
-          <span className="text-[#0d0d0d] text-sm font-medium">Aviary</span>
+          <span className="text-[#0d0d0d] text-sm font-medium">ProductBee.</span>
         </div>
       </header>
 
       <div className="flex h-[calc(100vh-64px)]">
-        {/* Left Sidebar */}
+        {/* Sidebar */}
         <aside className="w-96 bg-[#f2f2f2] border-r border-[#d9d9d9] flex flex-col overflow-y-auto">
-          {/* Project Cards */}
+          {/* Username dropdown on hover */}
+          {user && (
+            <div className="p-4 pb-0">
+              <div className="bg-white rounded-[16px] shadow-soft p-4 flex flex-col items-center gap-3">
+                {/* Username dropdown that stays open when hovering over menu */}
+                <div className="flex justify-end w-full">
+                  <div className="relative inline-block group">
+                    {/* The hover wrapper keeps dropdown open while moving to it */}
+                    <div className="flex flex-col items-end">
+                      <button className="flex items-center gap-2 px-4 py-2 bg-[#a855f7]/10 text-[#a855f7] rounded-full text-sm font-medium hover:bg-[#a855f7]/20 transition">
+                        {user.name || user.email}
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                      <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-[#e5e5e5] rounded-[12px] shadow-lg opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-150 ease-out pointer-events-none group-hover:pointer-events-auto z-50">
+                        <a
+                          href="/api/auth/logout"
+                          className="block px-4 py-2 text-sm text-[#a855f7] hover:bg-[#f5f5f5] rounded-[12px]"
+                        >
+                          Log out
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Project cards */}
           <div className="flex-1 p-4 space-y-4">
-            {projects && projects.length > 0 ? (
+            {projects?.length ? (
               projects.map((project) => (
                 <ProjectCard key={project._id || project.id} project={project} />
               ))
@@ -251,33 +208,41 @@ export default function DashboardClient({ projects: initialProjects = [], userRo
             )}
           </div>
 
-          {/* Bottom Bar with ProductBee and Create Button */}
-          <div className="mt-auto p-4 border-t border-[#d9d9d9] bg-white">
-            <div className="flex items-center justify-between">
-              <span className="text-[#a855f7] italic font-medium text-sm">ProductBee</span>
-              {canCreateProject && (
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#d9d9d9] text-[#0d0d0d] rounded-full text-sm font-medium hover:bg-[#c9c9c9] transition-colors"
-                >
-                  <span className="text-lg">+</span>
-                  Project
-                </button>
-              )}
-            </div>
+          {/* Sidebar bottom */}
+          <div className="mt-auto p-4 border-t border-[#d9d9d9] bg-white flex items-center justify-between">
+            <span className="text-[#a855f7] italic font-medium text-sm">ProductBee</span>
+            {canCreateProject && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#d9d9d9] text-[#0d0d0d] rounded-full text-sm font-medium hover:bg-[#c9c9c9] transition-colors"
+              >
+                <span className="text-lg">+</span>
+                Project
+              </button>
+            )}
           </div>
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main content area */}
         <main className="flex-1 overflow-y-auto bg-white">
+          {/* Project button in white container, matching sidebar username card */}
+          <div className="p-4 border-[#e5e5e5]">
+            <div className="bg-white rounded-[16px] shadow-soft p-4 flex-start">
+              <button className="flex items-center gap-2 px-5 py-2 bg-[#a855f7]/10 text-[#a855f7] rounded-full text-sm font-medium hover:bg-[#a855f7]/20 transition">
+                Projects
+              </button>
+            </div>
+          </div>
+
+
           <div className="p-8">
-            {projects && projects.length > 0 ? (
+            {projects?.length ? (
               <BentoGrid projects={projects} />
             ) : (
               <div className="flex items-center justify-center h-full min-h-[400px]">
                 <div className="text-center">
                   <p className="text-[#404040] text-lg mb-4">
-                    {canCreateProject 
+                    {canCreateProject
                       ? 'No projects yet. Create your first project to get started!'
                       : 'No projects available.'}
                   </p>
@@ -297,26 +262,18 @@ export default function DashboardClient({ projects: initialProjects = [], userRo
         </main>
       </div>
 
+      {/* Modal */}
       <CreateProjectModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
-          // Refresh projects after modal closes
           fetch('/api/projects')
             .then((res) => res.json())
             .then((responseData) => {
-              // Handle wrapped response: { success: true, data: { projects: [...] } }
               if (responseData.success && responseData.data) {
                 const data = responseData.data
-                // Ensure we always set an array
-                if (Array.isArray(data.projects)) {
-                  setProjects(data.projects)
-                } else {
-                  setProjects([])
-                }
-              } else {
-                setProjects([])
-              }
+                setProjects(Array.isArray(data.projects) ? data.projects : [])
+              } else setProjects([])
             })
             .catch((error) => {
               console.error('Error refreshing projects:', error)
