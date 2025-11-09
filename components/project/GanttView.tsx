@@ -26,14 +26,14 @@ const defaultColor = '#6b7280' // gray-500
 // Custom Tooltip Component
 const TooltipContent = ({ task, fontSize, fontFamily }: { task: Task; fontSize: string; fontFamily: string }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-      <div className="font-semibold text-gray-900 dark:text-white mb-1" style={{ fontSize, fontFamily }}>
+    <div className="bg-white p-3 rounded-lg shadow-soft">
+      <div className="font-semibold text-[#0d0d0d] mb-1" style={{ fontSize, fontFamily }}>
         {task.name}
       </div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-[#404040]">
         {task.start.toLocaleDateString()} - {task.end.toLocaleDateString()}
       </div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-[#404040]">
         Progress: {task.progress}%
       </div>
     </div>
@@ -119,7 +119,7 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="bg-white rounded-card shadow-soft p-8 border border-[#d9d9d9]">
+      <div className="bg-white rounded-card shadow-soft p-8">
         <div className="text-center text-[#404040]">
           <p className="text-lg mb-2">No timeline data available</p>
           <p className="text-sm">Features need start dates, end dates, or durations to appear in the Gantt chart.</p>
@@ -129,7 +129,7 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
   }
 
   return (
-    <div className="bg-white rounded-card shadow-soft border border-[#d9d9d9] overflow-x-auto">
+    <div className="bg-white rounded-card shadow-soft overflow-x-auto">
       <div className="p-4">
         <Gantt
           tasks={tasks}

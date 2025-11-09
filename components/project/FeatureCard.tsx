@@ -23,7 +23,7 @@ export default function FeatureCard({ feature, onClick, canEdit, onStatusChange 
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-card-inner shadow-soft p-4 cursor-pointer hover:shadow-lg transition-all border border-[#d9d9d9]"
+      className="bg-white rounded-card-inner shadow-soft p-4 cursor-pointer hover:shadow-lg transition-all"
     >
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-semibold text-[#0d0d0d] text-sm">

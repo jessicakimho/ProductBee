@@ -207,8 +207,8 @@ export default function ProjectDetailClient({
                     onClick={() => setSelectedStatus(isSelected ? null : column.id)}
                     className={`px-4 py-3 rounded-full text-sm font-medium transition-colors ${
                       isSelected
-                        ? 'bg-green-100 text-green-800 border-2 border-green-300'
-                        : 'bg-green-50 text-[#404040] hover:bg-green-100'
+                        ? 'bg-white border border-[#d9d9d9] text-[#0d0d0d] shadow-soft'
+                        : 'bg-white border border-[#d9d9d9] text-[#404040] hover:bg-[#f5f5f5]'
                     }`}
                   >
                     {column.title}
@@ -251,7 +251,7 @@ export default function ProjectDetailClient({
                   return (
                     <div
                       key={column.id}
-                      className="bg-white rounded-card shadow-soft p-4 border border-[#d9d9d9]"
+                      className="bg-white rounded-card shadow-soft p-4"
                     >
                       <h3 className="font-semibold text-[#0d0d0d] mb-4">
                         {column.title} ({features.length})

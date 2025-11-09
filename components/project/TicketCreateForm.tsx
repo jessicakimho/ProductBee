@@ -106,14 +106,14 @@ export default function TicketCreateForm({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="bg-white rounded-card shadow-soft w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="sticky top-0 bg-white border-b border-[#d9d9d9] px-6 py-4 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-[#0d0d0d]">
             Create New Ticket
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-[#404040] hover:text-[#0d0d0d] transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -124,7 +124,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Title <span className="text-red-500">*</span>
             </label>
@@ -133,7 +133,7 @@ export default function TicketCreateForm({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all"
               placeholder="Enter ticket title"
               required
             />
@@ -143,7 +143,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Description <span className="text-red-500">*</span>
             </label>
@@ -152,7 +152,7 @@ export default function TicketCreateForm({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all resize-none"
               placeholder="Describe the ticket in detail..."
               required
             />
@@ -163,7 +163,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="ticketType"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Ticket Type
               </label>
@@ -171,7 +171,7 @@ export default function TicketCreateForm({
                 id="ticketType"
                 value={ticketType}
                 onChange={(e) => setTicketType(e.target.value as typeof ticketType)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all"
               >
                 {Object.entries(TICKET_TYPES).map(([key, value]) => (
                   <option key={value} value={value}>
@@ -184,7 +184,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="priority"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Priority <span className="text-red-500">*</span>
               </label>
@@ -192,7 +192,7 @@ export default function TicketCreateForm({
                 id="priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as typeof priority)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all"
                 required
               >
                 {Object.entries(PRIORITY_LEVELS).map(([key, value]) => (
@@ -209,7 +209,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="assignedTo"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Assign To
               </label>
@@ -218,7 +218,7 @@ export default function TicketCreateForm({
                 value={assignedTo || ''}
                 onChange={(e) => setAssignedTo(e.target.value || null)}
                 disabled={membersLoading}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all disabled:opacity-50"
               >
                 <option value="">Unassigned</option>
                 {assignableMembers.map((member) => (
@@ -232,7 +232,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="storyPoints"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Story Points
               </label>
@@ -243,7 +243,7 @@ export default function TicketCreateForm({
                 max="100"
                 value={storyPoints || ''}
                 onChange={(e) => setStoryPoints(e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all"
                 placeholder="Optional"
               />
             </div>
@@ -253,7 +253,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="effortEstimateWeeks"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Estimated Effort (Weeks) <span className="text-red-500">*</span>
             </label>
@@ -264,7 +264,7 @@ export default function TicketCreateForm({
               step="0.5"
               value={effortEstimateWeeks}
               onChange={(e) => setEffortEstimateWeeks(parseFloat(e.target.value) || 1)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all"
               required
             />
           </div>
@@ -273,7 +273,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="acceptanceCriteria"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Acceptance Criteria
             </label>
@@ -282,7 +282,7 @@ export default function TicketCreateForm({
               value={acceptanceCriteria}
               onChange={(e) => setAcceptanceCriteria(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all resize-none"
               placeholder="Define the acceptance criteria for this ticket..."
             />
           </div>
@@ -291,7 +291,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="labels"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Labels
             </label>
@@ -307,13 +307,13 @@ export default function TicketCreateForm({
                     handleAddLabel()
                   }
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="flex-1 px-4 py-2 bg-white border border-[#d9d9d9] rounded-lg text-[#0d0d0d] focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition-all"
                 placeholder="Add a label and press Enter"
               />
               <button
                 type="button"
                 onClick={handleAddLabel}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 bg-white border border-[#d9d9d9] text-[#0d0d0d] rounded-lg hover:bg-[#f5f5f5] transition-colors"
               >
                 Add
               </button>
@@ -323,13 +323,13 @@ export default function TicketCreateForm({
                 {labels.map((label) => (
                   <span
                     key={label}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-[#a855f7] bg-opacity-10 text-[#a855f7] rounded-full text-sm"
                   >
                     {label}
                     <button
                       type="button"
                       onClick={() => handleRemoveLabel(label)}
-                      className="hover:text-blue-600 dark:hover:text-blue-300"
+                      className="hover:text-[#9333ea] transition-colors"
                     >
                       ×
                     </button>
@@ -341,24 +341,24 @@ export default function TicketCreateForm({
 
           {/* Reporter Info */}
           {profile && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-[#404040]">
               Reporter: {profile.name} ({profile.email})
             </div>
           )}
 
           {/* Submit Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#d9d9d9]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-6 py-2 bg-white border border-[#d9d9d9] text-[#0d0d0d] rounded-lg hover:bg-[#f5f5f5] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isCreating || !title.trim() || !description.trim()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-[#a855f7] text-white rounded-lg hover:bg-[#9333ea] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isCreating ? 'Creating...' : 'Create Ticket'}
             </button>

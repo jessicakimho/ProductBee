@@ -44,19 +44,19 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
     const gradient = getProjectGradient(project._id || project.id || '')
     
     const sizeClasses = {
-      large: gridClass || 'col-span-2 row-span-2',
-      'medium-vertical': gridClass || 'col-span-1 row-span-2',
-      'medium-square': gridClass || 'col-span-1 row-span-1',
-      small: gridClass || 'col-span-1 row-span-1',
+      large: gridClass || 'col-span-2',
+      'medium-vertical': gridClass || 'col-span-1',
+      'medium-square': gridClass || 'col-span-1',
+      small: gridClass || 'col-span-1',
     }
 
     return (
       <a
         key={project._id || project.id}
         href={`/project/${project._id || project.id}`}
-        className={`${sizeClasses[size]} bg-white rounded-card shadow-soft overflow-hidden cursor-pointer hover:shadow-lg transition-all group block`}
+        className={`${sizeClasses[size]} h-[32vw] bg-white rounded-[18px] shadow-soft overflow-hidden cursor-pointer hover:shadow-lg transition-all group block`}
       >
-        <div className={`w-full h-full relative overflow-hidden ${
+        <div className={`w-full h-full relative overflow-hidden rounded-[18px] ${
           !imageUrl ? `bg-gradient-to-br ${gradient}` : ''
         }`}>
           {imageUrl && (
@@ -64,11 +64,11 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
               src={imageUrl}
               alt={project.name}
               fill
-              className="object-cover scale-110"
+              className="object-cover scale-110 rounded-[18px]"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           )}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent z-10">
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent z-10 rounded-b-[18px]">
             <p className="text-white font-medium line-clamp-2 text-sm">
               {project.name}
             </p>
@@ -79,24 +79,24 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
   }
 
   // Build the grid layout matching the bento-box pattern
-  // High risk = Large (2x2), Medium risk = Medium (1x2 or 1x1), Low risk = Small (1x1)
+  // High risk = Large (col-span-2), Medium risk = Medium (col-span-1), Low risk = Small (col-span-1)
   const gridItems: Array<{ project: ProjectResponse; size: 'large' | 'medium-vertical' | 'medium-square' | 'small'; gridClass: string }> = []
   
   // First, assign high risk projects to large tiles
   organizedProjects.highRisk.forEach((project, index) => {
     if (index === 0) {
-      // First high risk gets large tile (2x2)
+      // First high risk gets large tile (col-span-2)
       gridItems.push({
         project,
         size: 'large',
-        gridClass: 'col-span-2 row-span-2'
+        gridClass: 'col-span-2'
       })
     } else {
       // Additional high risk projects get medium tiles
       gridItems.push({
         project,
         size: 'medium-square',
-        gridClass: 'col-span-1 row-span-1'
+        gridClass: 'col-span-1'
       })
     }
   })
@@ -108,21 +108,14 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
       gridItems.push({
         project,
         size: 'large',
-        gridClass: 'col-span-2 row-span-2'
-      })
-    } else if (index === 0 || (index === 1 && gridItems.length === 1)) {
-      // First or second medium gets vertical tile (1x2)
-      gridItems.push({
-        project,
-        size: 'medium-vertical',
-        gridClass: 'col-span-1 row-span-2'
+        gridClass: 'col-span-2'
       })
     } else {
-      // Other medium risk get square tiles (1x1)
+      // Medium risk get square tiles (col-span-1)
       gridItems.push({
         project,
         size: 'medium-square',
-        gridClass: 'col-span-1 row-span-1'
+        gridClass: 'col-span-1'
       })
     }
   })
@@ -132,12 +125,12 @@ function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
     gridItems.push({
       project,
       size: 'small',
-      gridClass: 'col-span-1 row-span-1'
+      gridClass: 'col-span-1'
     })
   })
 
   return (
-    <div className="grid grid-cols-4 auto-rows-[200px] gap-2">
+    <div className="grid grid-cols-3 gap-1.5">
       {gridItems.map(({ project, size, gridClass }) => 
         renderProjectTile(project, size, gridClass)
       )}
