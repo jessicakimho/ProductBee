@@ -104,7 +104,7 @@ export default function DashboardClient({ projects: initialProjects }: Dashboard
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-    </div>
+    </div> 
   )
 }
 
