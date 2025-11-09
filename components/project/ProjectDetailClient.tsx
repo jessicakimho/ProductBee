@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { ArrowLeft, AlertCircle, Sparkles } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import {
   DndContext,
   DragOverlay,
@@ -36,6 +36,7 @@ import ChatInterface from './ChatInterface'
 import TicketGenerationControls from './TicketGenerationControls'
 import PendingChangesNotification from './PendingChangesNotification'
 import PendingChangesList from '@/components/modals/PendingChangesList'
+import UserStoriesTab from './UserStoriesTab'
 import type { GetProjectResponse, FeatureResponse } from '@/types'
 
 interface ProjectDetailClientProps {
@@ -158,18 +159,17 @@ export default function ProjectDetailClient({
   const { user } = useUser()
   const [selectedFeature, setSelectedFeature] = useState<FeatureResponse | null>(null)
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false)
-  const [isChatOpen, setIsChatOpen] = useState(false)
   const [isPendingChangesOpen, setIsPendingChangesOpen] = useState(false)
   const [activeFeature, setActiveFeature] = useState<FeatureResponse | null>(null)
   const [optimisticFeatures, setOptimisticFeatures] = useState<FeatureResponse[] | null>(null)
 
-  // View state with localStorage persistence (default to 'gantt')
+  // View state with localStorage persistence (default to 'backlog')
   const [currentView, setCurrentView] = useState<ViewType>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('projectViewPreference')
-      return (saved === 'gantt' || saved === 'backlog') ? saved : 'gantt'
+      return (saved === 'gantt' || saved === 'backlog' || saved === 'user-stories') ? saved : 'backlog'
     }
-    return 'gantt'
+    return 'backlog'
   })
 
   // Save view preference to localStorage
@@ -360,26 +360,16 @@ export default function ProjectDetailClient({
             </span>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-start justify-between mb-2">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <AlertCircle className="w-5 h-5" />
-                Roadmap Summary
-              </h2>
-              {isPMOrAdmin && (
-                <button
-                  onClick={() => setIsChatOpen(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Modify with AI
-                </button>
-              )}
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-              {displayData.project.roadmap.summary}
-            </p>
-          </div>
+          {/* AI Chat Interface - Claude Style */}
+          {isPMOrAdmin && (
+            <ChatInterface
+              projectId={projectId}
+              roadmapSummary={displayData.project.roadmap.summary}
+              onTicketsGenerated={() => {
+                refetch()
+              }}
+            />
+          )}
         </div>
 
         {/* AI Ticket Generation Controls */}
@@ -392,46 +382,57 @@ export default function ProjectDetailClient({
           />
         )}
 
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Features
-          </h2>
-          <div className="flex items-center gap-4">
-            {pendingCount > 0 && (
-              <PendingChangesNotification
-                count={pendingCount}
-                onClick={() => setIsPendingChangesOpen(true)}
-              />
-            )}
-            <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
-            {!isViewer && (
-              <>
-                {isPMOrAdmin && (
-                  <button
-                    onClick={() => setIsChatOpen(true)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    AI Chat
-                  </button>
-                )}
+        {/* View Toggle and Actions */}
+        {currentView !== 'user-stories' && (
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Features
+            </h2>
+            <div className="flex items-center gap-4">
+              {pendingCount > 0 && (
+                <PendingChangesNotification
+                  count={pendingCount}
+                  onClick={() => setIsPendingChangesOpen(true)}
+                />
+              )}
+              <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+              {!isViewer && (
                 <button
                   onClick={() => setIsCreateTicketOpen(true)}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   + Create Ticket
                 </button>
-              </>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {currentView === 'gantt' ? (
+        {/* User Stories View */}
+        {currentView === 'user-stories' && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex-1"></div>
+              <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+            </div>
+            <UserStoriesTab
+              projectId={projectId}
+              userRole={userRole}
+              features={displayData.features}
+            />
+          </div>
+        )}
+
+        {/* Gantt View */}
+        {currentView === 'gantt' && (
           <GanttView
             features={displayData.features}
             onTaskClick={handleFeatureClick}
           />
-        ) : (
+        )}
+
+        {/* Backlog/Kanban View */}
+        {currentView === 'backlog' && (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -498,17 +499,6 @@ export default function ProjectDetailClient({
         }}
       />
 
-      {/* AI Chat Interface */}
-      {isPMOrAdmin && (
-        <ChatInterface
-          projectId={projectId}
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          onTicketsGenerated={() => {
-            refetch()
-          }}
-        />
-      )}
 
       {/* Pending Changes Modal */}
       <PendingChangesList

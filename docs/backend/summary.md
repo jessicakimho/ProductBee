@@ -16,12 +16,14 @@ interface BaseModel {
 
 ### Models
 
-`User`, `Project`, `Feature`, `Feedback` with:
+`User`, `Project`, `Feature`, `Feedback`, `PendingChange`, `UserStory` with:
 
 * account_id scoping
 * roadmap data
 * Jira-style ticket fields
 * feedback analysis fields
+* pending status change tracking (Phase 12)
+* user story and persona tracking (Phase 11.5)
 
 ### Constants (`/lib/constants.ts`)
 
@@ -32,6 +34,8 @@ interface BaseModel {
 * RiskLevels
 * Specializations
 * TicketTypes
+* PendingChangeStatus (Phase 12)
+* UserStoryFields (Phase 11.5)
 * DB mappings for all enums
 
 ### API Utilities (`/lib/api/`)
@@ -84,6 +88,8 @@ interface BaseModel {
 - `validateStoryPoints(points): void` - Validate story points (non-negative integer)
 - `validateLabels(labels): void` - Validate labels array
 - `validateRiskLevel(level): void` - Validate risk level
+- `validateUserStory(data): void` - Validate user story fields (Phase 11.5)
+- `validateUserStoryDemographics(demographics): void` - Validate demographics object (Phase 11.5)
 
 **Format Conversion (Critical for DB/API translation):**
 - `priorityToDb(apiPriority): string` - Convert API priority to DB format (`critical` → `P0`)
@@ -359,6 +365,226 @@ Project endpoint now returns full timeline graph with all calculations.
   - Automatically suggests assignments if not provided
   - Validates dependencies against existing features
   - Creates tickets with all Jira-style fields
+
+---
+
+## 12. Drag-and-Drop with Two-Way Confirmation (Phase 12)
+
+### PendingChange Model (`/models/PendingChange.ts`)
+
+* `feature_id` - Feature UUID
+* `proposed_by` - User ID who proposed the change
+* `from_status` - Current status (DB format)
+* `to_status` - Proposed status (DB format)
+* `status` - Pending change status: `pending`, `approved`, `rejected`
+* `account_id` - Account isolation
+* `rejection_reason` - Optional reason for rejection
+
+### Database Schema
+
+**`pending_changes` Table:**
+* Created via migration: `/supabase/migration_add_pending_changes.sql`
+* Indexes on: `feature_id`, `account_id`, `proposed_by`, `status`, `created_at`
+* CASCADE delete when feature is deleted
+* Status validation via CHECK constraint
+
+### Constants
+
+* `PENDING_CHANGE_STATUS` - `PENDING`, `APPROVED`, `REJECTED`
+
+### API Routes
+
+**`POST /api/feature/:id/propose-status-change`**
+* Proposes a status change for a feature
+* Creates pending change record with status "pending"
+* Permissions: Engineers, PMs, Admins (Viewers cannot propose)
+* Validation: New status must differ from current, only one pending change per feature
+* Returns: PendingChangeResponse with proposer info
+
+**`POST /api/feature/:id/approve-status-change`**
+* Approves a pending status change and applies it to the feature
+* Updates pending change status to "approved"
+* Updates feature status to proposed status
+* Permissions: PM or Admin only
+* Includes rollback logic if feature update fails
+* Returns: Updated pending change and feature
+
+**`POST /api/feature/:id/reject-status-change`**
+* Rejects a pending status change
+* Updates pending change status to "rejected"
+* Stores optional rejection reason
+* Does not modify feature status
+* Permissions: PM or Admin only
+* Returns: Rejected pending change with reason
+
+**`GET /api/project/:id/pending-changes`**
+* Returns all pending status changes for features in a project
+* Used for notification counters and approval UI
+* Permissions: All authenticated users
+* Filters by project's features via account isolation
+* Returns only pending changes (status = "pending")
+* Includes proposer user information
+* Ordered by creation date (newest first)
+
+### Type Definitions (`/types/api.ts`)
+
+* `ProposeStatusChangeRequest` - Request to propose status change
+* `PendingChangeResponse` - Pending change with proposer info
+* `ProposeStatusChangeResponse` - Response with pending change
+* `ApproveStatusChangeRequest` - Request to approve change
+* `ApproveStatusChangeResponse` - Response with approved change and updated feature
+* `RejectStatusChangeRequest` - Request to reject change (with optional reason)
+* `RejectStatusChangeResponse` - Response with rejected change
+* `GetPendingChangesResponse` - Response with array of pending changes
+
+### Security & Permissions
+
+* Account isolation enforced on all endpoints
+* Permission matrix: Engineers/PMs/Admins can propose, only PMs/Admins can approve/reject
+* Validation: Status validation, UUID validation, feature existence checks
+* Prevents duplicate pending changes per feature
+
+### Format Conversion
+
+* Status values converted between API and DB formats using `statusToDb()` and `statusToApi()`
+* API format: `not_started`, `in_progress`, `blocked`, `complete`
+* DB format: `backlog`, `active`, `blocked`, `complete`
+
+### Real-time Support
+
+* `pending_changes` table enabled for Supabase Realtime
+* Frontend can subscribe to pending changes for live updates
+
+### Workflow
+
+1. Engineer/PM proposes change → Creates pending change record
+2. PM/Admin reviews → Lists pending changes via GET endpoint
+3. PM/Admin approves → Updates pending change and feature status
+4. PM/Admin rejects → Updates pending change status with optional reason
+
+---
+
+## 11.5. User Stories & Personas (Phase 11.5)
+
+### UserStory Model (`/models/UserStory.ts`)
+
+* `project_id` - Project UUID
+* `account_id` - Account isolation
+* `name` - User story name (e.g., "As a customer")
+* `role` - User role (e.g., "I want to reset my password")
+* `goal` - User goal (e.g., "So that I can regain access to my account")
+* `benefit` - Business/user benefit (e.g., "Reduces support tickets")
+* `demographics` - Optional persona demographics (JSONB)
+* `created_by` - User ID who created the user story
+
+### Database Schema
+
+**`user_stories` Table:**
+* Created via migration: `/supabase/migration_add_user_stories.sql`
+* Indexes on: `project_id`, `account_id`, `created_by`
+* CASCADE delete when project is deleted
+* JSONB demographics for flexible persona data
+
+**`ticket_user_story` Join Table:**
+* Many-to-many relationship between tickets (features) and user stories
+* Composite primary key: `(ticket_id, user_story_id)`
+* CASCADE delete when ticket or user story is deleted
+* Account isolation via `account_id`
+
+### Constants
+
+* `USER_STORY_FIELDS` - Field names: `NAME`, `ROLE`, `GOAL`, `BENEFIT`, `DEMOGRAPHICS`
+
+### API Routes
+
+**`POST /api/user-story`**
+* Create a new user story for a project
+* Permissions: PM or Admin only
+* Validation: All required fields (name, role, goal, benefit)
+* Returns: UserStoryResponse with creator info
+
+**`PUT /api/user-story/:id`**
+* Update an existing user story
+* Permissions: PM or Admin only
+* Partial updates supported (only provided fields updated)
+* Returns: Updated UserStoryResponse with linked ticket IDs
+
+**`DELETE /api/user-story/:id`**
+* Delete a user story
+* Permissions: PM or Admin only
+* CASCADE delete removes all ticket-user story links
+* Returns: Success message
+
+**`GET /api/user-story/project/:id`**
+* Get all user stories for a project
+* Permissions: All authenticated users
+* Returns: Array of UserStoryResponse with linked ticket IDs
+* Ordered by creation date (newest first)
+
+**`POST /api/feature/:id/assign-user-story`**
+* Link a user story to a ticket (feature)
+* Permissions: PM or Admin only
+* Validation: User story must belong to same project as ticket
+* Returns: Success message with ticket and user story IDs
+
+**`DELETE /api/feature/:id/assign-user-story`**
+* Unlink a user story from a ticket (feature)
+* Permissions: PM or Admin only
+* Returns: Success message with ticket and user story IDs
+
+**`POST /api/feature/:id/check-alignment`**
+* Check how well a ticket aligns with user stories using AI analysis
+* Permissions: All authenticated users
+* Uses Gemini AI to analyze alignment
+* Returns: Alignment score (0-100), suggestions, matched user stories, AI analysis
+* If no user stories exist, returns score of 0 with suggestion to create user stories
+
+### Type Definitions (`/types/api.ts`)
+
+* `UserStoryResponse` - User story with creator info and linked ticket IDs
+* `CreateUserStoryRequest` - Request to create user story
+* `UpdateUserStoryRequest` - Request to update user story (all fields optional)
+* `GetUserStoriesResponse` - Response with array of user stories
+* `AssignUserStoryToTicketRequest` - Request to link user story to ticket
+* `AssignUserStoryToTicketResponse` - Response with success message
+* `UnassignUserStoryFromTicketRequest` - Request to unlink user story from ticket
+* `UnassignUserStoryFromTicketResponse` - Response with success message
+* `CheckTicketAlignmentRequest` - Request to check alignment (no body, uses ticket ID)
+* `TicketAlignmentResponse` - Response with alignment score, suggestions, matched user stories, AI analysis
+
+### AI Integration
+
+**Alignment Check (`/lib/prompts/alignment.ts`):**
+* Uses Gemini AI to analyze ticket alignment with user stories
+* Input: Ticket title, description, acceptance criteria, array of user stories
+* Output: Alignment score (0-100), suggestions, matched user stories with relevance scores, AI analysis
+* Integrated via `checkTicketAlignment()` function in `/lib/gemini.ts`
+
+### Security & Permissions
+
+* Account isolation enforced on all endpoints
+* Permission matrix: Viewers/Engineers can view and check alignment, only PMs/Admins can create/update/delete/link
+* Validation: UUID validation, required field validation, project relationship validation
+* User story must belong to same project as ticket when linking
+
+### Real-time Support
+
+* `user_stories` table enabled for Supabase Realtime
+* `ticket_user_story` table enabled for Supabase Realtime
+* Frontend can subscribe to user stories and ticket-user story links for live updates
+
+### Workflow
+
+1. PM creates user story → Calls POST /api/user-story
+2. PM links user story to ticket → Calls POST /api/feature/:id/assign-user-story
+3. PM/Engineer checks alignment → Calls POST /api/feature/:id/check-alignment
+4. PM updates user story → Calls PUT /api/user-story/:id
+5. PM deletes user story → Calls DELETE /api/user-story/:id (CASCADE removes links)
+
+### Validation Functions
+
+* `validateUserStory(data): void` - Validate user story fields (name, role, goal, benefit)
+* `validateUserStoryDemographics(demographics): void` - Validate demographics object
 
 ---
 

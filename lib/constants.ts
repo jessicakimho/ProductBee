@@ -114,6 +114,16 @@ export const PENDING_CHANGE_STATUS = {
 
 export type PendingChangeStatus = typeof PENDING_CHANGE_STATUS[keyof typeof PENDING_CHANGE_STATUS]
 
+// User Story Fields (Phase 11.5)
+// Note: User stories don't have enums, but we document the required fields here
+export const USER_STORY_FIELDS = {
+  NAME: 'name',
+  ROLE: 'role',
+  GOAL: 'goal',
+  BENEFIT: 'benefit',
+  DEMOGRAPHICS: 'demographics',
+} as const
+
 // API Response Codes
 export const HTTP_STATUS = {
   OK: 200,

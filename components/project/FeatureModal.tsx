@@ -8,6 +8,7 @@ import { useFeature } from '@/hooks/useFeature'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import EmployeeAssignmentDropdown from './EmployeeAssignmentDropdown'
 import FeedbackThread from '../feedback/FeedbackThread'
+import TicketAlignmentCheck from './TicketAlignmentCheck'
 import type { FeatureResponse, FeedbackResponse, ProjectResponse } from '@/types'
 
 interface FeatureModalProps {
@@ -200,6 +201,16 @@ export default function FeatureModal({
               <p className="text-gray-700 dark:text-gray-300">
                 {assignedMember ? assignedMember.name : 'Unassigned'}
               </p>
+            </div>
+          )}
+
+          {/* AI Alignment Check */}
+          {project && (
+            <div className="mb-6">
+              <TicketAlignmentCheck
+                projectId={project.id || project._id}
+                ticketId={feature._id || feature.id}
+              />
             </div>
           )}
 

@@ -4,6 +4,7 @@ import { getProposalAnalysisPrompt, parseProposalAnalysisResponse } from './prom
 import { getRoadmapComparisonPrompt, parseRoadmapComparisonResponse } from './prompts/comparison'
 import { getAssignmentSuggestionPrompt, parseAssignmentSuggestionResponse, type AssignmentSuggestionInput } from './prompts/assignment'
 import { getChatbotPrompt, parseChatbotResponse, type ChatbotInput } from './prompts/chatbot'
+import { getAlignmentCheckPrompt, parseAlignmentCheckResponse, type AlignmentCheckInput } from './prompts/alignment'
 import { APIErrors } from './api/errors'
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
@@ -249,6 +250,65 @@ export async function chatWithAI(input: ChatbotInput) {
     // Preserve the original error message if it's informative
     const errorMessage = error?.message || 'Failed to chat with AI'
     throw APIErrors.internalError(`Failed to chat with AI: ${errorMessage}`)
+  }
+}
+
+/**
+ * Check ticket alignment with user stories
+ * Phase 11.5: User Stories & Personas
+ */
+export async function checkTicketAlignment(input: AlignmentCheckInput) {
+  try {
+    const model = getModel()
+    const prompt = getAlignmentCheckPrompt(input)
+    
+    console.log('[Gemini] Checking ticket alignment for ticket:', input.ticketTitle)
+    console.log('[Gemini] User stories count:', input.userStories.length)
+    
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    
+    // Check if response was blocked
+    if (response.blockedReason) {
+      throw new Error(`Response was blocked: ${response.blockedReason}`)
+    }
+    
+    const text = response.text()
+    
+    if (!text || text.length === 0) {
+      throw new Error('Empty response from Gemini API')
+    }
+    
+    console.log('[Gemini] Received alignment check response')
+    
+    return parseAlignmentCheckResponse(text)
+  } catch (error: any) {
+    console.error('[Gemini] Error checking ticket alignment:', error)
+    console.error('[Gemini] Error details:', {
+      message: error?.message,
+      name: error?.name,
+      code: error?.code,
+      status: error?.status,
+      statusMessage: error?.statusMessage,
+      stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
+    })
+    
+    // Handle specific Gemini API errors
+    if (error?.message?.includes('API key')) {
+      throw APIErrors.internalError('Invalid or missing Gemini API key. Please check your GEMINI_API_KEY environment variable.')
+    }
+    
+    if (error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
+      throw APIErrors.internalError('Gemini API quota exceeded or rate limited. Please try again later.')
+    }
+    
+    if (error?.message?.includes('model')) {
+      throw APIErrors.internalError('Gemini model not available. Please check your API access.')
+    }
+    
+    // Preserve the original error message if it's informative
+    const errorMessage = error?.message || 'Failed to check ticket alignment'
+    throw APIErrors.internalError(`Failed to check ticket alignment: ${errorMessage}`)
   }
 }
 

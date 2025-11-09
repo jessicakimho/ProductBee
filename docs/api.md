@@ -1176,6 +1176,351 @@ Returns all pending status changes for features in a project. Used for notificat
 
 ---
 
+# User Stories & Personas (Phase 11.5)
+
+## POST `/api/user-story`
+
+Create a new user story for a project.
+
+**Permissions:** PMs and Admins only
+
+**Request Body:**
+```json
+{
+  "projectId": "uuid",
+  "name": "As a customer",
+  "role": "I want to reset my password",
+  "goal": "So that I can regain access to my account",
+  "benefit": "Reduces support tickets and improves user experience",
+  "demographics": {
+    "age": "25-45",
+    "location": "North America",
+    "technical_skill": "intermediate"
+  }
+}
+```
+
+**Validation:**
+- `projectId` (required) - Valid UUID, must belong to user's account
+- `name` (required) - Non-empty string
+- `role` (required) - Non-empty string
+- `goal` (required) - Non-empty string
+- `benefit` (required) - Non-empty string
+- `demographics` (optional) - Object with any key-value pairs (strings, numbers, or null)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userStory": {
+      "_id": "uuid",
+      "id": "uuid",
+      "projectId": "uuid",
+      "name": "As a customer",
+      "role": "I want to reset my password",
+      "goal": "So that I can regain access to my account",
+      "benefit": "Reduces support tickets and improves user experience",
+      "demographics": {
+        "age": "25-45",
+        "location": "North America",
+        "technical_skill": "intermediate"
+      },
+      "createdBy": {
+        "_id": "user-uuid",
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": null,
+      "linkedTicketIds": []
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Not PM or Admin, or project not accessible
+- `404 NOT_FOUND` - Project not found
+- `400 BAD_REQUEST` - Invalid request data (missing required fields, invalid project ID)
+- `500 INTERNAL_ERROR` - Database error
+
+## PUT `/api/user-story/:id`
+
+Update an existing user story.
+
+**Permissions:** PMs and Admins only
+
+**Parameters:**
+- `id` (path) - User Story UUID
+
+**Request Body:**
+```json
+{
+  "name": "As a customer",
+  "role": "I want to reset my password",
+  "goal": "So that I can regain access to my account",
+  "benefit": "Reduces support tickets and improves user experience",
+  "demographics": {
+    "age": "25-45",
+    "location": "North America",
+    "technical_skill": "intermediate"
+  }
+}
+```
+
+**Validation:**
+- All fields are optional (only provided fields are updated)
+- If provided, fields must be valid (non-empty strings for name/role/goal/benefit)
+- `demographics` can be null to remove demographics
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userStory": {
+      "_id": "uuid",
+      "id": "uuid",
+      "projectId": "uuid",
+      "name": "As a customer",
+      "role": "I want to reset my password",
+      "goal": "So that I can regain access to my account",
+      "benefit": "Reduces support tickets and improves user experience",
+      "demographics": {
+        "age": "25-45",
+        "location": "North America",
+        "technical_skill": "intermediate"
+      },
+      "createdBy": {
+        "_id": "user-uuid",
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-02T00:00:00Z",
+      "linkedTicketIds": ["ticket-uuid-1", "ticket-uuid-2"]
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Not PM or Admin, or user story not accessible
+- `404 NOT_FOUND` - User story not found
+- `400 BAD_REQUEST` - Invalid request data
+- `500 INTERNAL_ERROR` - Database error
+
+## DELETE `/api/user-story/:id`
+
+Delete a user story. Also removes all ticket-user story links.
+
+**Permissions:** PMs and Admins only
+
+**Parameters:**
+- `id` (path) - User Story UUID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "User story deleted successfully"
+  }
+}
+```
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Not PM or Admin, or user story not accessible
+- `404 NOT_FOUND` - User story not found
+- `500 INTERNAL_ERROR` - Database error
+
+## GET `/api/user-story/project/:id`
+
+Get all user stories for a project.
+
+**Parameters:**
+- `id` (path) - Project UUID
+
+**Permissions:** All authenticated users (project must belong to user's account)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userStories": [
+      {
+        "_id": "uuid",
+        "id": "uuid",
+        "projectId": "uuid",
+        "name": "As a customer",
+        "role": "I want to reset my password",
+        "goal": "So that I can regain access to my account",
+        "benefit": "Reduces support tickets and improves user experience",
+        "demographics": {
+          "age": "25-45",
+          "location": "North America",
+          "technical_skill": "intermediate"
+        },
+        "createdBy": {
+          "_id": "user-uuid",
+          "name": "John Doe",
+          "email": "john@example.com"
+        },
+        "createdAt": "2024-01-01T00:00:00Z",
+        "updatedAt": null,
+        "linkedTicketIds": ["ticket-uuid-1", "ticket-uuid-2"]
+      }
+    ]
+  }
+}
+```
+
+**Notes:**
+- Returns empty array if no user stories exist
+- Ordered by creation date (newest first)
+- Includes linked ticket IDs for each user story
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Project not accessible (different account)
+- `404 NOT_FOUND` - Project not found
+- `400 BAD_REQUEST` - Invalid project ID format
+- `500 INTERNAL_ERROR` - Database error
+
+## POST `/api/feature/:id/assign-user-story`
+
+Link a user story to a ticket (feature).
+
+**Parameters:**
+- `id` (path) - Feature/Ticket UUID
+
+**Permissions:** PMs and Admins only
+
+**Request Body:**
+```json
+{
+  "userStoryId": "uuid"
+}
+```
+
+**Validation:**
+- `userStoryId` (required) - Valid UUID
+- User story must belong to the same project as the ticket
+- User story and ticket must belong to user's account
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "User story linked to ticket successfully",
+    "ticketId": "uuid",
+    "userStoryId": "uuid"
+  }
+}
+```
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Not PM or Admin, or ticket/user story not accessible
+- `404 NOT_FOUND` - Ticket or user story not found
+- `400 BAD_REQUEST` - User story belongs to different project, or link already exists
+- `500 INTERNAL_ERROR` - Database error
+
+## DELETE `/api/feature/:id/assign-user-story`
+
+Unlink a user story from a ticket (feature).
+
+**Parameters:**
+- `id` (path) - Feature/Ticket UUID
+
+**Permissions:** PMs and Admins only
+
+**Request Body:**
+```json
+{
+  "userStoryId": "uuid"
+}
+```
+
+**Validation:**
+- `userStoryId` (required) - Valid UUID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "User story unlinked from ticket successfully",
+    "ticketId": "uuid",
+    "userStoryId": "uuid"
+  }
+}
+```
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Not PM or Admin, or ticket not accessible
+- `404 NOT_FOUND` - Ticket not found
+- `400 BAD_REQUEST` - Invalid request data
+- `500 INTERNAL_ERROR` - Database error
+
+## POST `/api/feature/:id/check-alignment`
+
+Check how well a ticket aligns with user stories using AI analysis.
+
+**Parameters:**
+- `id` (path) - Feature/Ticket UUID
+
+**Permissions:** All authenticated users (ticket must belong to user's account)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "alignmentScore": 85,
+    "suggestions": [
+      "Consider adding acceptance criteria that matches the user story goal",
+      "The ticket description could better reflect the user benefit"
+    ],
+    "matchedUserStories": [
+      {
+        "userStoryId": "uuid",
+        "userStoryName": "As a customer",
+        "relevanceScore": 90,
+        "reasons": [
+          "Ticket directly addresses the user story goal",
+          "Acceptance criteria align with user story benefit"
+        ]
+      }
+    ],
+    "aiAnalysis": "The ticket shows strong alignment with the user story 'As a customer'. The description and acceptance criteria directly address the user's goal of resetting their password. The ticket would benefit from more explicit mention of the user benefit (reducing support tickets)."
+  }
+}
+```
+
+**Notes:**
+- Returns alignment score (0-100) indicating how well the ticket aligns with user stories
+- Provides suggestions for improving alignment
+- Matches ticket to relevant user stories with relevance scores
+- Includes AI-generated analysis
+- If no user stories exist, returns score of 0 with suggestion to create user stories
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `403 FORBIDDEN` - Ticket not accessible (different account)
+- `404 NOT_FOUND` - Ticket not found
+- `400 BAD_REQUEST` - Invalid ticket ID format
+- `500 INTERNAL_ERROR` - Database error or AI service error
+
+---
+
 # Type Definitions
 
 ## ProjectResponse
@@ -1342,6 +1687,50 @@ Same as `UserProfileResponse` but includes:
 }
 ```
 
+## UserStoryResponse (Phase 11.5)
+
+```typescript
+{
+  _id: string
+  id: string
+  projectId: string
+  name: string
+  role: string
+  goal: string
+  benefit: string
+  demographics?: {
+    age?: string
+    location?: string
+    technical_skill?: string
+    [key: string]: any
+  } | null
+  createdBy: {
+    _id: string
+    name: string
+    email: string
+  }
+  createdAt: string
+  updatedAt?: string
+  linkedTicketIds?: string[]
+}
+```
+
+## TicketAlignmentResponse (Phase 11.5)
+
+```typescript
+{
+  alignmentScore: number // 0-100
+  suggestions: string[]
+  matchedUserStories: Array<{
+    userStoryId: string
+    userStoryName: string
+    relevanceScore: number // 0-100
+    reasons: string[]
+  }>
+  aiAnalysis: string
+}
+```
+
 ---
 
 # Rate Limiting
@@ -1357,4 +1746,6 @@ The application uses Supabase Realtime for live updates. When data changes in th
 - `features` - Feature status/assignment changes
 - `feedback` - New feedback and status changes
 - `pending_changes` - Pending status change proposals and approvals (Phase 12)
+- `user_stories` - User story creation, updates, and deletion (Phase 11.5)
+- `ticket_user_story` - Ticket-user story link changes (Phase 11.5)
 

@@ -1,8 +1,8 @@
 'use client'
 
-import { LayoutGrid, Calendar } from 'lucide-react'
+import { LayoutGrid, Calendar, Users } from 'lucide-react'
 
-export type ViewType = 'gantt' | 'backlog'
+export type ViewType = 'gantt' | 'backlog' | 'user-stories'
 
 interface ViewToggleProps {
   currentView: ViewType
@@ -12,6 +12,17 @@ interface ViewToggleProps {
 export default function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
   return (
     <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1">
+      <button
+        onClick={() => onViewChange('backlog')}
+        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          currentView === 'backlog'
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+        }`}
+      >
+        <LayoutGrid className="w-4 h-4" />
+        Backlog
+      </button>
       <button
         onClick={() => onViewChange('gantt')}
         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -24,15 +35,15 @@ export default function ViewToggle({ currentView, onViewChange }: ViewToggleProp
         Gantt
       </button>
       <button
-        onClick={() => onViewChange('backlog')}
+        onClick={() => onViewChange('user-stories')}
         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-          currentView === 'backlog'
+          currentView === 'user-stories'
             ? 'bg-blue-600 text-white'
             : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
       >
-        <LayoutGrid className="w-4 h-4" />
-        Backlog
+        <Users className="w-4 h-4" />
+        User Stories
       </button>
     </div>
   )

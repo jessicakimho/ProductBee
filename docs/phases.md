@@ -162,7 +162,7 @@ Enable PMs to have an ongoing conversation with AI to generate, modify, and refi
 
 ## **Phase 12: Drag-and-Drop with Two-Way Confirmation**
 
-**Status:** Backend Complete ✅  
+**Status:** Complete ✅  
 **Dependencies:** Phase 6 (Jira-Style Tickets), Phase 10 (Feedback System)  
 **Estimated Complexity:** Medium
 
@@ -248,23 +248,23 @@ CREATE INDEX idx_pending_changes_account_id ON pending_changes(account_id);
 
 ### **FRONTEND**
 
-- [ ] Install drag-and-drop library (`@dnd-kit/core` or `react-beautiful-dnd`)
-- [ ] Make Kanban columns draggable:
-  - [ ] Optimistic UI update (immediate visual feedback)
-  - [ ] Ghost card shows in new column
-  - [ ] Original card shows "Pending approval" badge
-- [ ] Create PendingChangesNotification component:
-  - [ ] Small counter badge on project card/header
-  - [ ] Shows count of pending approvals
-  - [ ] Click → opens PendingChangesList modal
-- [ ] Create PendingChangesList modal:
-  - [ ] Shows all pending status changes
-  - [ ] Each item: "User X wants to move Feature Y from A → B"
-  - [ ] Approve / Reject buttons
-  - [ ] Reason field for rejection
-- [ ] Handle rejection:
-  - [ ] Revert card to original column with animation
-  - [ ] Show toast: "Change rejected by [User]"
+- [x] Install drag-and-drop library (`@dnd-kit/core` or `react-beautiful-dnd`)
+- [x] Make Kanban columns draggable:
+  - [x] Optimistic UI update (immediate visual feedback)
+  - [x] Ghost card shows in new column
+  - [x] Original card shows "Pending approval" badge
+- [x] Create PendingChangesNotification component:
+  - [x] Small counter badge on project card/header
+  - [x] Shows count of pending approvals
+  - [x] Click → opens PendingChangesList modal
+- [x] Create PendingChangesList modal:
+  - [x] Shows all pending status changes
+  - [x] Each item: "User X wants to move Feature Y from A → B"
+  - [x] Approve / Reject buttons
+  - [x] Reason field for rejection
+- [x] Handle rejection:
+  - [x] Revert card to original column with animation
+  - [x] Show toast: "Change rejected by [User]"
 
 **Frontend Changes:**
 - Install: `@dnd-kit/core` or `react-beautiful-dnd` package
@@ -284,14 +284,145 @@ CREATE INDEX idx_pending_changes_account_id ON pending_changes(account_id);
 
 **Completion Checklist:**
 - [x] All backend tasks complete
-- [ ] All frontend tasks complete
+- [x] All frontend tasks complete
 - [x] Database migration applied
 - [x] API documentation updated
-- [ ] Feature documentation created
-- [ ] Backend summary updated
-- [ ] Frontend summary updated
+- [x] Feature documentation created
+- [x] Backend summary updated
+- [x] Frontend summary updated
 - [ ] Manual testing complete
 - [ ] Code reviewed
+
+
+---
+## **Phase 11.5: User Stories & Personas**
+
+**Status:** Complete ✅
+**Dependencies:** Phase 11 (AI Chatbot for Ticket Generation)
+**Estimated Complexity:** Medium
+
+### Before Starting
+
+**Prerequisites:**
+
+* Phase 11 must be completed
+* Understand project layout and ticket integration patterns
+* Review AI alignment checks (Gemini integration)
+
+**Setup:**
+
+* Database migration required: `user_stories` table
+* New constants: `USER_STORY_FIELDS`
+* New API endpoints:
+
+  * `POST /api/user-story` (create)
+  * `PUT /api/user-story/[id]` (update)
+  * `DELETE /api/user-story/[id]` (delete)
+  * `GET /api/user-story/project/[id]` (list for project)
+  * `POST /api/ticket/[id]/assign-user-story` (link ticket)
+
+---
+
+### **BACKEND**
+
+Enable PMs to create, edit, delete, and link user stories to tickets, with AI validation.
+
+* [x] Create `user_stories` table:
+
+  * `id` UUID primary key
+  * `project_id` UUID
+  * `name` TEXT
+  * `role` TEXT
+  * `goal` TEXT
+  * `benefit` TEXT
+  * `demographics` JSONB (age, location, technical skill)
+  * `created_by` UUID
+  * `created_at` TIMESTAMP
+  * `updated_at` TIMESTAMP
+* [x] CRUD endpoints for user stories
+* [x] Link tickets to user stories: `ticket_user_story` join table (`ticket_id`, `user_story_id`)
+* [x] AI alignment check endpoint:
+
+  * [x] Accepts projectId, ticketId
+  * [x] Returns alignment score / suggestions
+* [x] Permissions: Only PMs/Admins can CRUD user stories
+* [x] Account isolation enforced
+
+**Migration SQL:**
+
+```sql
+CREATE TABLE user_stories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  goal TEXT NOT NULL,
+  benefit TEXT NOT NULL,
+  demographics JSONB,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE ticket_user_story (
+  ticket_id UUID REFERENCES features(id) ON DELETE CASCADE,
+  user_story_id UUID REFERENCES user_stories(id) ON DELETE CASCADE,
+  PRIMARY KEY (ticket_id, user_story_id)
+);
+```
+
+---
+
+### **FRONTEND**
+
+* [x] Add **User Stories tab** on project page (switchable with roadmap/tickets)
+* [x] User Stories UI:
+
+  * [x] List of user stories with edit/delete buttons
+  * [x] Add new user story form (fields: name, role, goal, benefit, demographics)
+  * [x] Link/unlink tickets via dropdown or drag-and-drop
+* [x] AI validation UI:
+
+  * [x] Show alignment suggestions for tickets
+  * [x] Option to accept/reject AI recommendations
+* [x] Local state: store last 50 user stories per project in cache for performance
+
+**Frontend Components:**
+
+* `UserStoriesTab` (tab wrapper) ✅
+* `UserStoryCard` (displays story + linked tickets) ✅
+* `UserStoryForm` (create/edit form) ✅
+* `TicketAlignmentCheck` (AI alignment checker UI) ✅
+* Hook: `useUserStories` for CRUD + AI validation ✅
+
+---
+
+### **TESTING**
+
+* [ ] CRUD user stories (create, read, update, delete)
+* [ ] Link/unlink tickets to user stories
+* [ ] AI alignment suggestions are accurate and actionable
+* [ ] Permissions enforced (PM/Admin only)
+* [ ] Account isolation enforced
+* [ ] Tab switching works and renders correctly
+* [ ] Mobile-friendly UI
+
+---
+
+### **Completion Checklist**
+
+* [x] Backend tasks complete
+* [x] Frontend tasks complete
+* [x] Database migration applied
+* [x] API documentation updated
+* [x] Feature documentation created
+* [x] Backend summary updated
+* [x] Frontend summary updated
+* [ ] Manual testing complete
+* [ ] Code reviewed
+
+---
+
 
 ---
 
@@ -494,12 +625,12 @@ Ensure PMs only see their own projects, co-owners see shared projects, and Admin
 ## Progress Summary
 
 **Total Phases:** 14  
-**Completed:** 11  
-**Backend Complete (Phase 12):** 1  
-**Remaining:** 3
+**Completed:** 13  
+**Remaining:** 1
 
 **New Features Added:**
 - Phase 11: AI Chatbot (ticket generation)
+- Phase 11.5: User Stories & Personas
 - Phase 12: Drag-and-drop with approval
 - Phase 13: Multi-project Gantt
 - Phase 14: PM visibility & co-ownership

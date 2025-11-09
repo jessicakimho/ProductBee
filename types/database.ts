@@ -56,3 +56,29 @@ export interface DatabaseFeedback {
   status: 'pending' | 'approved' | 'rejected'
   created_at: string
 }
+
+export interface DatabaseUserStory {
+  id: string
+  project_id: string
+  account_id: string
+  name: string
+  role: string
+  goal: string
+  benefit: string
+  demographics?: {
+    age?: string
+    location?: string
+    technical_skill?: string
+    [key: string]: any
+  } | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DatabaseTicketUserStory {
+  ticket_id: string
+  user_story_id: string
+  account_id: string
+  created_at: string
+}

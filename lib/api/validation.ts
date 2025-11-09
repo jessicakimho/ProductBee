@@ -10,6 +10,7 @@ import {
   TICKET_TYPES,
   ROLES,
   PENDING_CHANGE_STATUS,
+  USER_STORY_FIELDS,
 } from '@/lib/constants'
 
 /**
@@ -290,6 +291,51 @@ export function validatePendingChangeStatus(status: string): void {
   const validStatuses = Object.values(PENDING_CHANGE_STATUS)
   if (!validStatuses.includes(status as any)) {
     throw APIErrors.badRequest(`Invalid pending change status. Must be one of: ${validStatuses.join(', ')}`)
+  }
+}
+
+/**
+ * Validate user story demographics (Phase 11.5)
+ */
+export function validateUserStoryDemographics(demographics: any): void {
+  if (demographics === null || demographics === undefined) {
+    return // null/undefined is valid (optional field)
+  }
+  if (typeof demographics !== 'object') {
+    throw APIErrors.badRequest('Demographics must be an object')
+  }
+  // Allow any keys, but values should be strings or numbers
+  for (const [key, value] of Object.entries(demographics)) {
+    if (typeof value !== 'string' && typeof value !== 'number' && value !== null) {
+      throw APIErrors.badRequest(`Demographic field "${key}" must be a string, number, or null`)
+    }
+  }
+}
+
+/**
+ * Validate user story fields (Phase 11.5)
+ */
+export function validateUserStory(data: Record<string, any>): void {
+  validateRequired(data, ['name', 'role', 'goal', 'benefit'])
+  
+  if (typeof data.name !== 'string' || data.name.trim().length === 0) {
+    throw APIErrors.badRequest('User story name is required and must be a non-empty string')
+  }
+  
+  if (typeof data.role !== 'string' || data.role.trim().length === 0) {
+    throw APIErrors.badRequest('User story role is required and must be a non-empty string')
+  }
+  
+  if (typeof data.goal !== 'string' || data.goal.trim().length === 0) {
+    throw APIErrors.badRequest('User story goal is required and must be a non-empty string')
+  }
+  
+  if (typeof data.benefit !== 'string' || data.benefit.trim().length === 0) {
+    throw APIErrors.badRequest('User story benefit is required and must be a non-empty string')
+  }
+  
+  if (data.demographics !== undefined) {
+    validateUserStoryDemographics(data.demographics)
   }
 }
 

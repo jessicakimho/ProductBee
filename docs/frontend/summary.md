@@ -919,6 +919,385 @@ Hook for managing AI chat functionality:
 
 ---
 
+# **Phase 12: Drag-and-Drop with Two-Way Confirmation**
+
+**Status:** Complete ✅  
+**Dependencies:** Phase 6 (Jira-Style Tickets), Phase 10 (Feedback System)
+
+## **Overview**
+
+Phase 12 implements drag-and-drop functionality for moving features between status columns with a two-way confirmation system. Engineers and PMs can propose status changes by dragging cards, but changes require approval from PMs or Admins before being applied.
+
+## **Components Created**
+
+### **PendingChangesNotification** (`/components/project/PendingChangesNotification.tsx`)
+
+Small counter badge that displays the number of pending status changes.
+
+**Features:**
+- Shows count of pending approvals
+- Displays red badge with number (max 99+)
+- Click handler to open PendingChangesList modal
+- Hidden when count is 0
+- Styled with Tailwind (bell icon, badge)
+
+**Props:**
+```ts
+interface PendingChangesNotificationProps {
+  count: number
+  onClick: () => void
+}
+```
+
+### **PendingChangesList** (`/components/modals/PendingChangesList.tsx`)
+
+Modal that displays all pending status changes with approve/reject functionality.
+
+**Features:**
+- Shows all pending status changes for a project
+- Each item displays: "User X wants to move Feature Y from A → B"
+- Approve / Reject buttons for each change
+- Optional reason field for rejection
+- Loading states during approval/rejection
+- Status labels (Backlog, In Progress, Blocked, Complete)
+- Timestamp display
+
+**Props:**
+```ts
+interface PendingChangesListProps {
+  isOpen: boolean
+  onClose: () => void
+  pendingChanges: PendingChangeResponse[]
+  features: FeatureResponse[]
+  onApprove: (featureId: string, pendingChangeId: string) => Promise<void>
+  onReject: (featureId: string, pendingChangeId: string, reason?: string) => Promise<void>
+  isApproving: boolean
+  isRejecting: boolean
+}
+```
+
+## **Hooks Created**
+
+### **usePendingChanges** (`/hooks/usePendingChanges.ts`)
+
+Hook for managing pending status changes.
+
+**Functions:**
+- `fetchPendingChanges(projectId)` - Fetch all pending changes for a project
+- `proposeStatusChange(featureId, newStatus)` - Propose a status change
+- `approveStatusChange(featureId, pendingChangeId)` - Approve a pending change
+- `rejectStatusChange(featureId, pendingChangeId, reason?)` - Reject a pending change
+
+**Returns:**
+```ts
+interface UsePendingChangesReturn {
+  pendingChanges: PendingChangeResponse[]
+  isLoading: boolean
+  error: string | null
+  count: number
+  fetchPendingChanges: (projectId: string) => Promise<void>
+  proposeStatusChange: (featureId: string, newStatus: string) => Promise<PendingChangeResponse | null>
+  approveStatusChange: (featureId: string, pendingChangeId: string) => Promise<boolean>
+  rejectStatusChange: (featureId: string, pendingChangeId: string, reason?: string) => Promise<boolean>
+  isProposing: boolean
+  isApproving: boolean
+  isRejecting: boolean
+}
+```
+
+**Features:**
+- Automatic error handling with toast notifications
+- Loading states for each operation
+- Automatic state updates after operations
+- Account isolation (handled by API)
+
+## **Integration**
+
+### **ProjectDetailClient Updates**
+
+* Added drag-and-drop support using `@dnd-kit/core` and `@dnd-kit/sortable`
+* Integrated `PendingChangesNotification` component (header)
+* Integrated `PendingChangesList` modal
+* Added `usePendingChanges` hook
+* Implemented optimistic UI updates
+* Added drag overlay for visual feedback
+* Disabled dragging for features with pending changes
+
+### **Drag-and-Drop Implementation**
+
+**Libraries Used:**
+- `@dnd-kit/core` - Core drag-and-drop functionality
+- `@dnd-kit/sortable` - Sortable list support
+- `@dnd-kit/utilities` - Utility functions (CSS transforms)
+
+**Components:**
+- `DndContext` - Main drag-and-drop context
+- `SortableContext` - Sortable list context
+- `DraggableFeatureCard` - Draggable feature card wrapper
+- `DroppableColumn` - Droppable status column
+- `DragOverlay` - Drag overlay for visual feedback
+
+**Features:**
+- Optimistic UI updates (immediate visual feedback)
+- Ghost card shows in new column during drag
+- Original card shows "Pending approval" badge after drag
+- Cards with pending changes cannot be dragged
+- Keyboard and pointer sensor support
+- Collision detection with `closestCenter`
+
+### **FeatureCard Updates**
+
+* Added `pendingChangeId` prop
+* Shows yellow border when pending change exists
+* Displays "Pending" badge with clock icon
+* Styled with Tailwind (yellow background, border)
+
+### **Optimistic UI Updates**
+
+When a user drags a feature to a new column:
+1. Optimistic update immediately moves card to new column
+2. API call proposes status change
+3. If successful, card shows "Pending" badge
+4. If failed, card reverts to original column
+5. Real-time updates refresh data when change is approved/rejected
+
+### **Rejection Handling**
+
+When a status change is rejected:
+1. Pending change is removed from list
+2. Feature card reverts to original column (via data refresh)
+3. Toast notification shows rejection message
+4. Optional rejection reason is displayed
+
+## **Features Implemented**
+
+✅ **Drag-and-Drop:**
+- Install `@dnd-kit/core` and related packages
+- Make Kanban columns draggable
+- Optimistic UI updates (immediate visual feedback)
+- Ghost card shows in new column
+- Original card shows "Pending approval" badge
+
+✅ **Pending Changes Notification:**
+- Small counter badge on project header
+- Shows count of pending approvals
+- Click opens PendingChangesList modal
+
+✅ **Pending Changes List:**
+- Shows all pending status changes
+- Each item: "User X wants to move Feature Y from A → B"
+- Approve / Reject buttons
+- Reason field for rejection
+
+✅ **Rejection Handling:**
+- Revert card to original column (via data refresh)
+- Show toast: "Change rejected by [User]"
+- Display rejection reason if provided
+
+✅ **Permission Enforcement:**
+- Viewers cannot drag cards
+- Only PMs and Admins can approve/reject
+- Engineers and PMs can propose changes
+
+## **Patterns Used**
+
+* **Hook Pattern:** `usePendingChanges` follows same pattern as `useFeature`, `useFeedback`
+* **Component Organization:** Feature-based structure in `/components/project/` and `/components/modals/`
+* **State Management:** React hooks with real-time updates
+* **Animation:** CSS transitions via `@dnd-kit/utilities`
+* **Error Handling:** Toast notifications via `react-hot-toast`
+* **Type Safety:** Full TypeScript types from `/types/api.ts`
+* **Optimistic Updates:** Immediate UI feedback with rollback on error
+
+## **Testing Recommendations**
+
+* Test drag-and-drop functionality (drag card between columns)
+* Test optimistic UI updates (immediate visual feedback)
+* Test approval/rejection UI (buttons, modals)
+* Test notification badge (count, click handler)
+* Test animation on rejection (card revert)
+* Test permission enforcement (Viewers cannot drag)
+* Test on mobile devices (touch support)
+* Test keyboard navigation (accessibility)
+
+---
+
+# **Phase 11.5: User Stories & Personas (Frontend)**
+
+**Status:** Complete ✅  
+**Dependencies:** Phase 11.5 Backend (User Stories & Personas)
+
+## **Components Created**
+
+### **UserStoriesTab** (`/components/project/UserStoriesTab.tsx`)
+
+Main component for the User Stories view. Displays a list of user stories with CRUD functionality.
+
+**Features:**
+- List of user stories in a responsive grid layout (1/2/3 columns)
+- Create new user story button (PM/Admin only)
+- Empty state with call-to-action
+- Loading and error states
+- Integration with `useUserStories` hook
+
+### **UserStoryCard** (`/components/project/UserStoryCard.tsx`)
+
+Displays a single user story with all details and linked tickets.
+
+**Features:**
+- User story details (name, role, goal, benefit)
+- Demographics display (age, location, technical skill) with badges
+- Linked tickets list with unlink functionality
+- Link ticket dropdown (PM/Admin only)
+- Edit and delete buttons (PM/Admin only)
+- Created by and timestamp display
+
+### **UserStoryForm** (`/components/project/UserStoryForm.tsx`)
+
+Modal form for creating and editing user stories.
+
+**Features:**
+- Create and edit modes
+- Required fields: name, role, goal, benefit
+- Optional demographics: age, location, technical skill
+- Form validation
+- Loading states during submission
+- Responsive modal design
+
+### **TicketAlignmentCheck** (`/components/project/TicketAlignmentCheck.tsx`)
+
+AI-powered alignment checker for tickets against user stories.
+
+**Features:**
+- Check alignment button
+- Alignment score display (0-100) with color coding
+- AI analysis text
+- Matched user stories with relevance scores
+- Improvement suggestions
+- Loading states during alignment check
+- Empty state when no user stories exist
+
+**Score Interpretation:**
+- 80-100%: Well Aligned (green)
+- 60-79%: Moderate (yellow)
+- 0-59%: Needs Improvement (red)
+
+## **Hooks Created**
+
+### **useUserStories** (`/hooks/useUserStories.ts`)
+
+Hook for managing user stories CRUD operations and AI alignment checking.
+
+**Functions:**
+- `fetchUserStories(projectId)` - Fetch all user stories for a project
+- `createUserStory(data)` - Create a new user story
+- `updateUserStory(userStoryId, data)` - Update an existing user story
+- `deleteUserStory(userStoryId)` - Delete a user story
+- `assignUserStoryToTicket(ticketId, userStoryId)` - Link a user story to a ticket
+- `unassignUserStoryFromTicket(ticketId, userStoryId)` - Unlink a user story from a ticket
+- `checkTicketAlignment(projectId, ticketId)` - Check ticket alignment with user stories
+
+**Local Caching:**
+- Stores last 50 user stories per project in memory cache
+- Cache key: `projectId`
+- Cache is used for instant display, with background refresh
+- Cache is updated on create, update, and delete operations
+
+## **Integration**
+
+### **ViewToggle Component Update**
+
+Updated to include a "User Stories" tab option:
+
+```ts
+export type ViewType = 'gantt' | 'backlog' | 'user-stories'
+```
+
+**Changes:**
+- Added "User Stories" button with Users icon
+- Updated view type to include 'user-stories'
+- Maintains localStorage persistence for view preference
+
+### **ProjectDetailClient Integration**
+
+Updated to support User Stories view:
+
+**Changes:**
+- Added `UserStoriesTab` import
+- Updated view state initialization to support 'user-stories'
+- Added conditional rendering for User Stories tab
+- View toggle displayed in User Stories view
+- Features list hidden when User Stories view is active
+
+### **FeatureModal Integration**
+
+Added AI alignment check to ticket detail modal:
+
+**Changes:**
+- Added `TicketAlignmentCheck` component
+- Displayed after Assignment section
+- Shows alignment score, AI analysis, matched user stories, and suggestions
+- Available to all users (not just PM/Admin)
+
+## **Features Implemented**
+
+✅ **User Stories Tab:**
+- Added User Stories tab on project page (switchable with roadmap/tickets)
+- Responsive grid layout for user stories
+- Empty state with call-to-action
+
+✅ **User Stories UI:**
+- List of user stories with edit/delete buttons
+- Add new user story form (fields: name, role, goal, benefit, demographics)
+- Link/unlink tickets via dropdown
+
+✅ **AI Validation UI:**
+- Show alignment suggestions for tickets
+- Alignment score with color coding
+- Matched user stories with relevance scores
+- Improvement suggestions
+
+✅ **Local State Caching:**
+- Store last 50 user stories per project in cache for performance
+- Instant display from cache
+- Background refresh to update cache
+
+## **Patterns Used**
+
+* **Hook Pattern:** `useUserStories` follows same pattern as `useFeature`, `useFeedback`
+* **Component Organization:** Feature-based structure in `/components/project/`
+* **State Management:** React hooks with local caching
+* **Type Safety:** Full TypeScript types from `/types/api.ts`
+* **Permission-Based UI:** Conditional rendering based on user role
+
+## **Files Created/Modified**
+
+### **Created**
+- `/hooks/useUserStories.ts` - User stories hook
+- `/components/project/UserStoriesTab.tsx` - Main user stories view
+- `/components/project/UserStoryCard.tsx` - User story card component
+- `/components/project/UserStoryForm.tsx` - User story form modal
+- `/components/project/TicketAlignmentCheck.tsx` - AI alignment checker
+- `/docs/features/frontend/phase11.5-user-stories.md` - Feature documentation
+
+### **Modified**
+- `/components/project/ViewToggle.tsx` - Added User Stories tab option
+- `/components/project/ProjectDetailClient.tsx` - Integrated User Stories tab
+- `/components/project/FeatureModal.tsx` - Added alignment check component
+
+## **Testing Recommendations**
+
+* Test user stories CRUD operations (create, read, update, delete)
+* Test ticket linking/unlinking flow
+* Test AI alignment checking
+* Test permission enforcement (Viewer cannot create/edit/delete)
+* Test tab switching between views
+* Test responsive design on mobile/tablet/desktop
+* Test loading and error states
+* Test empty states and call-to-actions
+
+---
+
 # **Next Steps**
 
 * Full constants migration
@@ -928,3 +1307,5 @@ Hook for managing AI chat functionality:
 * Integration tests
 * More consistent error boundaries
 * Error boundary components for React error boundaries
+* Real-time subscriptions for user stories updates
+* User story pagination for large lists

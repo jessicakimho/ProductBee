@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CheckCircle2, XCircle, Sparkles, Loader2 } from 'lucide-react'
+import { CheckCircle2, XCircle, Sparkles, Loader2, AlertTriangle, User, X } from 'lucide-react'
 import { useChat } from '@/hooks/useChat'
 import type { SuggestedTicket } from '@/types/chat'
 import { PRIORITY_LEVELS } from '@/lib/constants'
@@ -11,16 +11,42 @@ interface TicketGenerationControlsProps {
   onTicketsApplied?: (ticketIds: string[]) => void
 }
 
-type GenerationMode = 'all' | 'one' | 'none'
+interface EngineerInfo {
+  id: string
+  name: string
+  currentTicketCount: number
+  currentStoryPointCount: number
+  isOverloaded: boolean
+  confidenceScore?: number
+}
+
+// Thresholds for "red" engineers (overloaded)
+const OVERLOAD_THRESHOLDS = {
+  MAX_TICKETS: 5,
+  MAX_STORY_POINTS: 30,
+}
+
+// Check if engineer is overloaded (in the red)
+function isEngineerOverloaded(ticketCount: number, storyPointCount: number): boolean {
+  return ticketCount > OVERLOAD_THRESHOLDS.MAX_TICKETS || storyPointCount > OVERLOAD_THRESHOLDS.MAX_STORY_POINTS
+}
+
+// Check if ticket can be auto-assigned
+function canAutoAssign(ticket: SuggestedTicket, engineerInfo: EngineerInfo | null): boolean {
+  if (!ticket.assignedTo || !engineerInfo) return false
+  if (ticket.confidenceScore === undefined || ticket.confidenceScore < 50) return false
+  return !engineerInfo.isOverloaded
+}
 
 export default function TicketGenerationControls({
   projectId,
   onTicketsApplied,
 }: TicketGenerationControlsProps) {
-  const [generationMode, setGenerationMode] = useState<GenerationMode>('none')
   const [selectedTickets, setSelectedTickets] = useState<Set<number>>(new Set())
   const [visibleTickets, setVisibleTickets] = useState<number[]>([])
-  const [firstTicketLoadTime, setFirstTicketLoadTime] = useState<number | null>(null)
+  const [engineerInfoMap, setEngineerInfoMap] = useState<Map<number, EngineerInfo | null>>(new Map())
+  const [loadingEngineers, setLoadingEngineers] = useState<Set<number>>(new Set())
+  const [assignmentWarnings, setAssignmentWarnings] = useState<Map<number, string>>(new Map())
 
   const {
     suggestedTickets,
@@ -30,53 +56,168 @@ export default function TicketGenerationControls({
     setSuggestedTickets,
   } = useChat(projectId)
 
-  // Handle lazy loading animations
-  useEffect(() => {
-    if (suggestedTickets.length === 0) {
-      setVisibleTickets([])
-      setFirstTicketLoadTime(null)
+  // Fetch engineer info for a ticket
+  const fetchEngineerInfo = async (ticketIndex: number, ticket: SuggestedTicket) => {
+    if (!ticket.assignedTo) {
+      setEngineerInfoMap((prev) => new Map(prev.set(ticketIndex, null)))
       return
     }
 
-    // If generating, show skeleton loaders
-    if (isGenerating) {
-      return
-    }
+    setLoadingEngineers((prev) => new Set(prev).add(ticketIndex))
 
-    // Fade in tickets with stagger animation
-    const staggerDelay = 150 // ms between each ticket
-    const baseDelay = firstTicketLoadTime ? 0 : 200 // Initial delay for first ticket
+    try {
+      const response = await fetch('/api/team/members')
+      const responseData = await response.json()
 
-    suggestedTickets.forEach((_, index) => {
-      setTimeout(() => {
-        setVisibleTickets((prev) => {
-          if (!prev.includes(index)) {
-            return [...prev, index]
-          }
-          return prev
-        })
-      }, baseDelay + index * staggerDelay)
-    })
-
-    // Set first ticket load time for consistency
-    if (firstTicketLoadTime === null && suggestedTickets.length > 0) {
-      setFirstTicketLoadTime(Date.now())
-    }
-  }, [suggestedTickets, isGenerating, firstTicketLoadTime])
-
-  const handleModeChange = (mode: GenerationMode) => {
-    setGenerationMode(mode)
-    if (mode === 'all') {
-      // Select all tickets
-      setSelectedTickets(new Set(suggestedTickets.map((_, index) => index)))
-    } else if (mode === 'one') {
-      // Select only first ticket
-      setSelectedTickets(new Set([0]))
-    } else {
-      // Deselect all
-      setSelectedTickets(new Set())
+      if (response.ok && responseData.success) {
+        const engineer = responseData.data.members.find((m: any) => m.id === ticket.assignedTo)
+        if (engineer) {
+          const isOverloaded = isEngineerOverloaded(
+            engineer.currentTicketCount,
+            engineer.currentStoryPointCount
+          )
+          setEngineerInfoMap((prev) =>
+            new Map(
+              prev.set(ticketIndex, {
+                id: engineer.id,
+                name: engineer.name,
+                currentTicketCount: engineer.currentTicketCount,
+                currentStoryPointCount: engineer.currentStoryPointCount,
+                isOverloaded,
+                confidenceScore: ticket.confidenceScore,
+              })
+            )
+          )
+        } else {
+          setEngineerInfoMap((prev) => new Map(prev.set(ticketIndex, null)))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch engineer info:', error)
+      setEngineerInfoMap((prev) => new Map(prev.set(ticketIndex, null)))
+    } finally {
+      setLoadingEngineers((prev) => {
+        const next = new Set(prev)
+        next.delete(ticketIndex)
+        return next
+      })
     }
   }
+
+  // Fetch engineer info for all tickets with assignments
+  useEffect(() => {
+    if (suggestedTickets.length === 0) {
+      setEngineerInfoMap(new Map())
+      setVisibleTickets([])
+      return
+    }
+
+    // Fetch engineer info for all tickets
+    suggestedTickets.forEach((ticket, index) => {
+      if (ticket.assignedTo && !engineerInfoMap.has(index)) {
+        fetchEngineerInfo(index, ticket)
+      }
+    })
+  }, [suggestedTickets])
+
+  // Determine which tickets can be auto-assigned
+  const autoAssignableTickets = suggestedTickets
+    .map((ticket, index) => {
+      const engineerInfo = engineerInfoMap.get(index)
+      return { index, ticket, engineerInfo, canAutoAssign: canAutoAssign(ticket, engineerInfo || null) }
+    })
+    .filter((item) => item.canAutoAssign)
+    .map((item) => item.index)
+
+  // Check if all engineers are overloaded or all confidence scores are < 50%
+  // Only consider tickets with assignments
+  const ticketsWithAssignments = suggestedTickets
+    .map((ticket, index) => ({ ticket, index }))
+    .filter(({ ticket }) => ticket.assignedTo)
+
+  const allEngineersOverloaded =
+    ticketsWithAssignments.length > 0 &&
+    ticketsWithAssignments.every(({ index }) => {
+      const engineerInfo = engineerInfoMap.get(index)
+      return !engineerInfo || engineerInfo.isOverloaded
+    })
+
+  const allConfidenceLow =
+    ticketsWithAssignments.length > 0 &&
+    ticketsWithAssignments.every(
+      ({ ticket }) => ticket.confidenceScore === undefined || ticket.confidenceScore < 50
+    )
+
+  const shouldShowWarnings = (allEngineersOverloaded || allConfidenceLow) && ticketsWithAssignments.length > 0
+
+  // Lazy load tickets: auto-assignable ones first, then others one by one
+  useEffect(() => {
+    if (suggestedTickets.length === 0 || isGenerating) {
+      return
+    }
+
+    // Wait for engineer info to load for tickets with assignments
+    const ticketsWithAssignments = suggestedTickets.filter((t) => t.assignedTo)
+    if (ticketsWithAssignments.length > 0 && loadingEngineers.size > 0) {
+      return // Wait for engineer info to load
+    }
+
+    // If we can auto-assign some tickets, show those first
+    if (autoAssignableTickets.length > 0) {
+      autoAssignableTickets.forEach((index, i) => {
+        setTimeout(() => {
+          setVisibleTickets((prev) => {
+            if (!prev.includes(index)) {
+              return [...prev, index]
+            }
+            return prev
+          })
+        }, i * 100) // Stagger by 100ms
+      })
+    }
+
+    // Show non-auto-assignable tickets one by one (quicker)
+    const nonAutoAssignable = suggestedTickets
+      .map((_, index) => index)
+      .filter((index) => !autoAssignableTickets.includes(index))
+
+    if (nonAutoAssignable.length > 0) {
+      // If we have auto-assignable tickets, wait a bit after they're shown
+      // Otherwise, show non-auto-assignable tickets immediately
+      const delay = autoAssignableTickets.length > 0 ? autoAssignableTickets.length * 100 + 200 : 0
+      nonAutoAssignable.forEach((index, i) => {
+        setTimeout(() => {
+          setVisibleTickets((prev) => {
+            if (!prev.includes(index)) {
+              return [...prev, index]
+            }
+            return prev
+          })
+        }, delay + i * 50) // Faster loading (50ms between tickets)
+      })
+    }
+  }, [suggestedTickets, isGenerating, autoAssignableTickets, loadingEngineers.size])
+
+  // Check for assignment warnings when selecting tickets
+  useEffect(() => {
+    const warnings = new Map<number, string>()
+    selectedTickets.forEach((index) => {
+      const ticket = suggestedTickets[index]
+      const engineerInfo = engineerInfoMap.get(index)
+
+      if (ticket.assignedTo && engineerInfo) {
+        if (engineerInfo.isOverloaded) {
+          warnings.set(
+            index,
+            `Warning: ${engineerInfo.name} is overloaded (${engineerInfo.currentTicketCount} tickets, ${engineerInfo.currentStoryPointCount} story points). Manual assignment required.`
+          )
+        } else if (ticket.confidenceScore !== undefined && ticket.confidenceScore < 50) {
+          warnings.set(index, `Warning: Low confidence score (${ticket.confidenceScore}%). Manual assignment recommended.`)
+        }
+      }
+    })
+    setAssignmentWarnings(warnings)
+  }, [selectedTickets, suggestedTickets, engineerInfoMap])
 
   const handleTicketToggle = (index: number) => {
     const newSelected = new Set(selectedTickets)
@@ -86,35 +227,20 @@ export default function TicketGenerationControls({
       newSelected.add(index)
     }
     setSelectedTickets(newSelected)
-
-    // Update mode based on selection
-    if (newSelected.size === 0) {
-      setGenerationMode('none')
-    } else if (newSelected.size === suggestedTickets.length) {
-      setGenerationMode('all')
-    } else if (newSelected.size === 1) {
-      setGenerationMode('one')
-    } else {
-      setGenerationMode('none') // Custom selection
-    }
   }
 
   const handleApply = async () => {
     if (selectedTickets.size === 0) return
 
-    const ticketsToApply = suggestedTickets.filter((_, index) =>
-      selectedTickets.has(index)
-    )
+    const ticketsToApply = suggestedTickets.filter((_, index) => selectedTickets.has(index))
 
     const createdIds = await applyTickets(ticketsToApply)
     if (createdIds) {
       // Remove applied tickets from suggestions
-      const remainingTickets = suggestedTickets.filter(
-        (_, index) => !selectedTickets.has(index)
-      )
+      const remainingTickets = suggestedTickets.filter((_, index) => !selectedTickets.has(index))
       setSuggestedTickets(remainingTickets)
       setSelectedTickets(new Set())
-      setGenerationMode('none')
+      setAssignmentWarnings(new Map())
       onTicketsApplied?.(createdIds)
     }
   }
@@ -122,7 +248,8 @@ export default function TicketGenerationControls({
   const handleDismiss = () => {
     setSuggestedTickets([])
     setSelectedTickets(new Set())
-    setGenerationMode('none')
+    setAssignmentWarnings(new Map())
+    setEngineerInfoMap(new Map())
   }
 
   const getPriorityColor = (priority: string) => {
@@ -162,7 +289,6 @@ export default function TicketGenerationControls({
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
                   <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
                   <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
                 </div>
               </div>
             </div>
@@ -192,57 +318,42 @@ export default function TicketGenerationControls({
         </button>
       </div>
 
-      {/* Mode Selector */}
-      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Generation Mode
-        </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleModeChange('all')}
-            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              generationMode === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            Generate All
-          </button>
-          <button
-            onClick={() => handleModeChange('one')}
-            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              generationMode === 'one'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            One at a Time
-          </button>
-          <button
-            onClick={() => handleModeChange('none')}
-            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              generationMode === 'none'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-            }`}
-          >
-            None
-          </button>
+      {/* Global Warning */}
+      {shouldShowWarnings && (
+        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Auto-assignment unavailable
+              </p>
+              <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                {allEngineersOverloaded
+                  ? 'All engineers are overloaded. Manual assignment required for all tickets.'
+                  : 'All assignments have low confidence scores. Manual assignment recommended.'}
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Ticket List */}
       <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
         {suggestedTickets.map((ticket, index) => {
           const isVisible = visibleTickets.includes(index)
-          const isLoading = isGenerating && !isVisible
-          
+          const isLoading = loadingEngineers.has(index) || (isGenerating && !isVisible)
+          const engineerInfo = engineerInfoMap.get(index)
+          const canAutoAssign = canAutoAssign(ticket, engineerInfo || null)
+          const warning = assignmentWarnings.get(index)
+
+          if (!isVisible && !isLoading) return null
+
           return (
             <div
               key={index}
-              className={`border rounded-lg p-4 cursor-pointer transition-all ${
+              className={`border rounded-lg transition-all ${
                 isLoading
-                  ? 'opacity-0'
+                  ? 'opacity-50'
                   : isVisible
                   ? 'opacity-100 animate-fade-in'
                   : 'opacity-0'
@@ -251,49 +362,120 @@ export default function TicketGenerationControls({
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
-              onClick={() => handleTicketToggle(index)}
-              style={{
-                animationDelay: `${index * 150}ms`,
-              }}
             >
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-1">
-                {selectedTickets.has(index) ? (
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                ) : (
-                  <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-                    {ticket.title}
-                  </h4>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${getPriorityColor(
-                      ticket.priority
-                    )}`}
-                  >
-                    {ticket.priority}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
-                  {ticket.description}
-                </p>
-                <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <span>Effort: {ticket.effortEstimateWeeks} weeks</span>
-                  {ticket.storyPoints && <span>• {ticket.storyPoints} SP</span>}
-                  {ticket.labels && ticket.labels.length > 0 && (
-                    <span>• {ticket.labels.join(', ')}</span>
-                  )}
-                  {ticket.confidenceScore !== undefined && (
-                    <span>• {ticket.confidenceScore}% confidence</span>
-                  )}
+              <div
+                className="p-4 cursor-pointer"
+                onClick={() => handleTicketToggle(index)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-1">
+                    {selectedTickets.has(index) ? (
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    ) : (
+                      <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {/* Engineer Assignment Info */}
+                    {ticket.assignedTo ? (
+                      <div
+                        className={`mb-3 p-2 rounded-lg ${
+                          canAutoAssign
+                            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                            : engineerInfo?.isOverloaded
+                            ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                            : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+                        }`}
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              Loading engineer info...
+                            </span>
+                          </div>
+                        ) : engineerInfo ? (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                              <span className="text-xs font-medium text-gray-900 dark:text-white">
+                                {engineerInfo.name}
+                              </span>
+                              {canAutoAssign && (
+                                <span className="text-xs text-green-600 dark:text-green-400">
+                                  (Auto-assigned)
+                                </span>
+                              )}
+                              {engineerInfo.isOverloaded && (
+                                <span className="text-xs text-red-600 dark:text-red-400">
+                                  (Overloaded - Manual assignment required)
+                                </span>
+                              )}
+                              {!canAutoAssign && !engineerInfo.isOverloaded && ticket.confidenceScore !== undefined && ticket.confidenceScore < 50 && (
+                                <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                                  (Low confidence)
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {engineerInfo.currentTicketCount} tickets, {engineerInfo.currentStoryPointCount} SP
+                              {ticket.confidenceScore !== undefined && (
+                                <span> • {ticket.confidenceScore}% confidence</span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Engineer not found
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mb-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          No engineer assigned • Manual assignment required
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ticket Info */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                        {ticket.title}
+                      </h4>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${getPriorityColor(
+                          ticket.priority
+                        )}`}
+                      >
+                        {ticket.priority}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                      {ticket.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span>Effort: {ticket.effortEstimateWeeks} weeks</span>
+                      {ticket.storyPoints && <span>• {ticket.storyPoints} SP</span>}
+                      {ticket.labels && ticket.labels.length > 0 && (
+                        <span>• {ticket.labels.join(', ')}</span>
+                      )}
+                      {!ticket.assignedTo && ticket.confidenceScore !== undefined && (
+                        <span>• {ticket.confidenceScore}% confidence</span>
+                      )}
+                    </div>
+
+                    {/* Assignment Warning */}
+                    {warning && (
+                      <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                        {warning}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )
+          )
         })}
       </div>
 
@@ -332,4 +514,3 @@ export default function TicketGenerationControls({
     </div>
   )
 }
-

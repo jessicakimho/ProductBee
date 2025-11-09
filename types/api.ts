@@ -391,3 +391,104 @@ export interface RejectStatusChangeResponse {
 export interface GetPendingChangesResponse {
   pendingChanges: PendingChangeResponse[]
 }
+
+// User Story API Types (Phase 11.5)
+export interface UserStoryResponse {
+  _id: string
+  id: string
+  projectId: string
+  name: string
+  role: string
+  goal: string
+  benefit: string
+  demographics?: {
+    age?: string
+    location?: string
+    technical_skill?: string
+    [key: string]: any
+  } | null
+  createdBy: {
+    _id: string
+    name: string
+    email: string
+  }
+  createdAt: string
+  updatedAt?: string
+  linkedTicketIds?: string[]
+}
+
+export interface CreateUserStoryRequest {
+  projectId: string
+  name: string
+  role: string
+  goal: string
+  benefit: string
+  demographics?: {
+    age?: string
+    location?: string
+    technical_skill?: string
+    [key: string]: any
+  } | null
+}
+
+export interface CreateUserStoryResponse {
+  userStory: UserStoryResponse
+}
+
+export interface UpdateUserStoryRequest {
+  name?: string
+  role?: string
+  goal?: string
+  benefit?: string
+  demographics?: {
+    age?: string
+    location?: string
+    technical_skill?: string
+    [key: string]: any
+  } | null
+}
+
+export interface UpdateUserStoryResponse {
+  userStory: UserStoryResponse
+}
+
+export interface GetUserStoriesResponse {
+  userStories: UserStoryResponse[]
+}
+
+export interface AssignUserStoryToTicketRequest {
+  userStoryId: string
+}
+
+export interface AssignUserStoryToTicketResponse {
+  message: string
+  ticketId: string
+  userStoryId: string
+}
+
+export interface UnassignUserStoryFromTicketRequest {
+  userStoryId: string
+}
+
+export interface UnassignUserStoryFromTicketResponse {
+  message: string
+  ticketId: string
+  userStoryId: string
+}
+
+export interface CheckTicketAlignmentRequest {
+  projectId: string
+  ticketId: string
+}
+
+export interface TicketAlignmentResponse {
+  alignmentScore: number // 0-100
+  suggestions: string[]
+  matchedUserStories: Array<{
+    userStoryId: string
+    userStoryName: string
+    relevanceScore: number
+    reasons: string[]
+  }>
+  aiAnalysis: string
+}
