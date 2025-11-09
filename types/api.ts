@@ -29,6 +29,7 @@ export interface ProjectResponse {
   roadmap: {
     summary: string
     riskLevel: string
+    imageUrl?: string | null
   }
   createdAt: string
   createdBy?: {

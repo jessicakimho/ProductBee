@@ -11,13 +11,13 @@ interface ViewToggleProps {
 
 export default function ViewToggle({ currentView, onViewChange }: ViewToggleProps) {
   return (
-    <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1">
+    <div className="inline-flex rounded-full border border-[#d9d9d9] bg-white p-1 shadow-soft">
       <button
         onClick={() => onViewChange('gantt')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
           currentView === 'gantt'
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ? 'bg-[#a855f7] text-white'
+            : 'text-[#404040] hover:bg-[#f2f2f2]'
         }`}
       >
         <Calendar className="w-4 h-4" />
@@ -25,10 +25,10 @@ export default function ViewToggle({ currentView, onViewChange }: ViewToggleProp
       </button>
       <button
         onClick={() => onViewChange('backlog')}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
           currentView === 'backlog'
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ? 'bg-[#a855f7] text-white'
+            : 'text-[#404040] hover:bg-[#f2f2f2]'
         }`}
       >
         <LayoutGrid className="w-4 h-4" />

@@ -1,13 +1,149 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import Image from 'next/image'
 import { useUser } from '@auth0/nextjs-auth0/client'
-import { Plus, LogOut } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { ROLES } from '@/lib/constants'
 import ProjectCard from './ProjectCard'
 import CreateProjectModal from '../modals/CreateProjectModal'
 import type { ProjectResponse } from '@/types'
+
+// Bento Grid Component
+function BentoGrid({ projects }: { projects: ProjectResponse[] }) {
+  // Organize projects by risk level
+  const organizedProjects = useMemo(() => {
+    const highRisk = projects.filter(p => (p.roadmap?.riskLevel?.toLowerCase() || 'low') === 'high')
+    const mediumRisk = projects.filter(p => (p.roadmap?.riskLevel?.toLowerCase() || 'low') === 'medium')
+    const lowRisk = projects.filter(p => (p.roadmap?.riskLevel?.toLowerCase() || 'low') === 'low')
+
+    return { highRisk, mediumRisk, lowRisk }
+  }, [projects])
+
+  // Generate gradient for fallback
+  const getProjectGradient = (id: string) => {
+    const gradients = [
+      'from-blue-200 via-blue-300 to-green-200',
+      'from-yellow-200 via-orange-200 to-pink-200',
+      'from-green-200 via-emerald-200 to-teal-200',
+      'from-pink-200 via-purple-200 to-indigo-200',
+      'from-orange-200 via-red-200 to-pink-200',
+    ]
+    const index = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % gradients.length
+    return gradients[index]
+  }
+
+  // Render a project tile
+  const renderProjectTile = (
+    project: ProjectResponse, 
+    size: 'large' | 'medium-vertical' | 'medium-square' | 'small',
+    gridClass?: string
+  ) => {
+    const imageUrl = project.roadmap?.imageUrl
+    const gradient = getProjectGradient(project._id || project.id || '')
+    
+    const sizeClasses = {
+      large: gridClass || 'col-span-2 row-span-2',
+      'medium-vertical': gridClass || 'col-span-1 row-span-2',
+      'medium-square': gridClass || 'col-span-1 row-span-1',
+      small: gridClass || 'col-span-1 row-span-1',
+    }
+
+    return (
+      <a
+        key={project._id || project.id}
+        href={`/project/${project._id || project.id}`}
+        className={`${sizeClasses[size]} bg-white rounded-card shadow-soft overflow-hidden cursor-pointer hover:shadow-lg transition-all group block`}
+      >
+        <div className={`w-full h-full relative overflow-hidden ${
+          !imageUrl ? `bg-gradient-to-br ${gradient}` : ''
+        }`}>
+          {imageUrl && (
+            <Image
+              src={imageUrl}
+              alt={project.name}
+              fill
+              className="object-cover scale-110"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          )}
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent z-10">
+            <p className="text-white font-medium line-clamp-2 text-sm">
+              {project.name}
+            </p>
+          </div>
+        </div>
+      </a>
+    )
+  }
+
+  // Build the grid layout matching the bento-box pattern
+  // High risk = Large (2x2), Medium risk = Medium (1x2 or 1x1), Low risk = Small (1x1)
+  const gridItems: Array<{ project: ProjectResponse; size: 'large' | 'medium-vertical' | 'medium-square' | 'small'; gridClass: string }> = []
+  
+  // First, assign high risk projects to large tiles
+  organizedProjects.highRisk.forEach((project, index) => {
+    if (index === 0) {
+      // First high risk gets large tile (2x2)
+      gridItems.push({
+        project,
+        size: 'large',
+        gridClass: 'col-span-2 row-span-2'
+      })
+    } else {
+      // Additional high risk projects get medium tiles
+      gridItems.push({
+        project,
+        size: 'medium-square',
+        gridClass: 'col-span-1 row-span-1'
+      })
+    }
+  })
+  
+  // Then, assign medium risk projects to medium tiles
+  organizedProjects.mediumRisk.forEach((project, index) => {
+    if (index === 0 && gridItems.length === 0) {
+      // If no high risk, first medium gets large
+      gridItems.push({
+        project,
+        size: 'large',
+        gridClass: 'col-span-2 row-span-2'
+      })
+    } else if (index === 0 || (index === 1 && gridItems.length === 1)) {
+      // First or second medium gets vertical tile (1x2)
+      gridItems.push({
+        project,
+        size: 'medium-vertical',
+        gridClass: 'col-span-1 row-span-2'
+      })
+    } else {
+      // Other medium risk get square tiles (1x1)
+      gridItems.push({
+        project,
+        size: 'medium-square',
+        gridClass: 'col-span-1 row-span-1'
+      })
+    }
+  })
+  
+  // Finally, assign low risk projects to small tiles
+  organizedProjects.lowRisk.forEach((project) => {
+    gridItems.push({
+      project,
+      size: 'small',
+      gridClass: 'col-span-1 row-span-1'
+    })
+  })
+
+  return (
+    <div className="grid grid-cols-4 auto-rows-[200px] gap-2">
+      {gridItems.map(({ project, size, gridClass }) => 
+        renderProjectTile(project, size, gridClass)
+      )}
+    </div>
+  )
+}
 
 interface DashboardClientProps {
   projects?: ProjectResponse[]
@@ -71,79 +207,102 @@ export default function DashboardClient({ projects: initialProjects = [], userRo
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
         <div className="text-gray-500">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              ProductBee
-            </h1>
-            <div className="flex items-center gap-4">
-              {user && (
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {user.name || user.email}
-                </span>
-              )}
-              <a
-                href="/api/auth/logout"
-                className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </a>
-            </div>
+    <div className="min-h-screen bg-[#f5f5f5]">
+      {/* Top Header */}
+      <header className="bg-[#f5f5f5] border-b border-[#d9d9d9] h-16 flex items-center px-6">
+        <div className="flex items-center gap-3 flex-1">
+          {/* Bee Logo - Rounded Container */}
+          <div className="w-6 h-6 relative flex-shrink-0 rounded-md overflow-hidden">
+            <Image
+              src="/bee_logo.png"
+              alt="ProductBee Logo"
+              fill
+              className="object-contain"
+              sizes="24px"
+            />
           </div>
+          <span className="text-[#0d0d0d] text-sm">Is...</span>
         </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Projects
-          </h2>
-          {canCreateProject && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-            >
-              <Plus className="w-5 h-5" />
-              Create Project
-            </button>
+        <div className="flex items-center gap-4">
+          {user && (
+            <div className="px-4 py-2 bg-[#a855f7] rounded-full text-white text-sm font-medium">
+              {user.name || user.email}
+            </div>
           )}
+          <span className="text-[#0d0d0d] text-sm font-medium">Aviary</span>
         </div>
+      </header>
 
-        {!projects || projects.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {canCreateProject 
-                ? 'No projects yet. Create your first project to get started!'
-                : 'No projects available.'}
-            </p>
-            {canCreateProject && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Create Project
-              </button>
+      <div className="flex h-[calc(100vh-64px)]">
+        {/* Left Sidebar */}
+        <aside className="w-96 bg-[#f2f2f2] border-r border-[#d9d9d9] flex flex-col overflow-y-auto">
+          {/* Project Cards */}
+          <div className="flex-1 p-4 space-y-4">
+            {projects && projects.length > 0 ? (
+              projects.map((project) => (
+                <ProjectCard key={project._id || project.id} project={project} />
+              ))
+            ) : (
+              <div className="bg-white rounded-card shadow-soft p-6 text-center">
+                <p className="text-[#404040] text-sm mb-4">
+                  No projects yet. Create your first project to get started!
+                </p>
+              </div>
             )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects && projects.map((project) => (
-              <ProjectCard key={project._id || project.id} project={project} />
-            ))}
+
+          {/* Bottom Bar with ProductBee and Create Button */}
+          <div className="mt-auto p-4 border-t border-[#d9d9d9] bg-white">
+            <div className="flex items-center justify-between">
+              <span className="text-[#a855f7] italic font-medium text-sm">ProductBee</span>
+              {canCreateProject && (
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#d9d9d9] text-[#0d0d0d] rounded-full text-sm font-medium hover:bg-[#c9c9c9] transition-colors"
+                >
+                  <span className="text-lg">+</span>
+                  Project
+                </button>
+              )}
+            </div>
           </div>
-        )}
-      </main>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto bg-white">
+          <div className="p-8">
+            {projects && projects.length > 0 ? (
+              <BentoGrid projects={projects} />
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[400px]">
+                <div className="text-center">
+                  <p className="text-[#404040] text-lg mb-4">
+                    {canCreateProject 
+                      ? 'No projects yet. Create your first project to get started!'
+                      : 'No projects available.'}
+                  </p>
+                  {canCreateProject && (
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Create Project
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
 
       <CreateProjectModal
         isOpen={isModalOpen}
@@ -175,4 +334,3 @@ export default function DashboardClient({ projects: initialProjects = [], userRo
     </div>
   )
 }
-

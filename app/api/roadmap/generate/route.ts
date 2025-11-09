@@ -6,6 +6,7 @@ import { getUserFromSession } from '@/lib/api/permissions'
 import { validateRequired, validateJsonBody } from '@/lib/api/validation'
 import { handleError, successResponse, APIErrors } from '@/lib/api/errors'
 import { HTTP_STATUS } from '@/lib/constants'
+import { getProjectImage } from '@/lib/met-api'
 import type { GenerateRoadmapRequest, GenerateRoadmapResponse } from '@/types/api'
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,29 @@ export async function POST(request: NextRequest) {
       throw APIErrors.internalError('Invalid roadmap data received from AI')
     }
 
+    // Fetch image from Met Museum API (excluding images already in use)
+    console.log('[Roadmap Generate] Fetching project image from Met Museum API')
+    let projectImageUrl: string | null = null
+    try {
+      // Get all existing project images to avoid duplicates
+      const { data: existingProjects } = await supabase
+        .from('projects')
+        .select('roadmap')
+        .eq('account_id', user.account_id)
+      
+      const existingImageUrls = (existingProjects || [])
+        .map((p) => p.roadmap?.imageUrl)
+        .filter((url): url is string => Boolean(url))
+      
+      console.log(`[Roadmap Generate] Found ${existingImageUrls.length} existing images to exclude`)
+      
+      projectImageUrl = await getProjectImage(existingImageUrls)
+      console.log('[Roadmap Generate] Image fetched:', projectImageUrl ? 'Success' : 'No image found')
+    } catch (imageError) {
+      console.error('[Roadmap Generate] Error fetching image:', imageError)
+      // Continue without image if API fails
+    }
+
     // Create project with account_id for account isolation
     const { data: project, error: projectError } = await supabase
       .from('projects')
@@ -58,6 +82,7 @@ export async function POST(request: NextRequest) {
         roadmap: {
           summary: roadmapData.summary,
           riskLevel: roadmapData.riskLevel || 'medium',
+          imageUrl: projectImageUrl, // Store image URL in roadmap JSONB
         },
       })
       .select()

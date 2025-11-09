@@ -119,8 +119,8 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 border border-gray-200 dark:border-gray-700">
-        <div className="text-center text-gray-500 dark:text-gray-400">
+      <div className="bg-white rounded-card shadow-soft p-8 border border-[#d9d9d9]">
+        <div className="text-center text-[#404040]">
           <p className="text-lg mb-2">No timeline data available</p>
           <p className="text-sm">Features need start dates, end dates, or durations to appear in the Gantt chart.</p>
         </div>
@@ -129,7 +129,7 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto">
+    <div className="bg-white rounded-card shadow-soft border border-[#d9d9d9] overflow-x-auto">
       <div className="p-4">
         <Gantt
           tasks={tasks}
