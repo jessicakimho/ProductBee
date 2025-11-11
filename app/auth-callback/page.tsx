@@ -10,13 +10,39 @@ import { useUser } from '@auth0/nextjs-auth0/client'
  * It waits for the session to be established client-side before redirecting
  * to the dashboard, preventing infinite redirect loops from timing issues.
  * 
- * We use client-side only to avoid server-side cookie timing issues.
+ * IMPORTANT: If this page receives a 'code' parameter, it means Auth0
+ * redirected here directly instead of going through /api/auth/callback.
+ * In that case, we redirect to /api/auth/callback first to process the code.
  */
 export default function AuthCallbackPage() {
   const { user, isLoading, error } = useUser()
   const [redirecting, setRedirecting] = useState(false)
+  const [checkedCode, setCheckedCode] = useState(false)
 
   useEffect(() => {
+    // Check if we have a 'code' parameter - this means Auth0 redirected here
+    // directly instead of going through /api/auth/callback first
+    // We only check this once on mount
+    if (!checkedCode && typeof window !== 'undefined') {
+      setCheckedCode(true)
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
+      const state = params.get('state')
+      
+      if (code) {
+        // Redirect to the Auth0 callback handler to process the code
+        // It will then redirect back to /auth-callback (without the code)
+        const callbackUrl = `/api/auth/callback?code=${encodeURIComponent(code)}${state ? `&state=${encodeURIComponent(state)}` : ''}`
+        window.location.href = callbackUrl
+        return // Exit early - we're redirecting
+      }
+    }
+
+    // If we haven't checked yet or we're still processing the code redirect, wait
+    if (!checkedCode) {
+      return
+    }
+
     // Wait for Auth0 to finish loading
     if (isLoading) {
       return
@@ -56,7 +82,7 @@ export default function AuthCallbackPage() {
 
       return () => clearTimeout(timer)
     }
-  }, [user, isLoading, error, redirecting])
+  }, [user, isLoading, error, redirecting, checkedCode])
 
   // Show loading state while waiting
   return (
