@@ -51,7 +51,7 @@ export interface DatabaseFeedback {
   account_id: string
   type: 'comment' | 'proposal'
   content: string
-  proposed_roadmap?: any
+  proposed_roadmap?: Record<string, unknown> | null
   ai_analysis?: string
   status: 'pending' | 'approved' | 'rejected'
   created_at: string
@@ -69,7 +69,7 @@ export interface DatabaseUserStory {
     age?: string
     location?: string
     technical_skill?: string
-    [key: string]: any
+    [key: string]: string | number | null | undefined
   } | null
   created_by: string
   created_at: string

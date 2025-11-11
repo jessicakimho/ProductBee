@@ -124,7 +124,7 @@ export async function analyzeProposal(proposalContent: string, originalRoadmap: 
  * Compare original roadmap with proposed roadmap
  * Returns array of changed features
  */
-export async function compareRoadmaps(originalRoadmap: any, proposedRoadmap: any) {
+export async function compareRoadmaps(originalRoadmap: Record<string, unknown>, proposedRoadmap: Record<string, unknown>) {
   try {
     const model = getModel()
     const prompt = getRoadmapComparisonPrompt({

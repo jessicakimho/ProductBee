@@ -5,6 +5,7 @@ import { createServerClient } from '@/lib/supabase'
 import { getUserFromSession, canViewProject } from '@/lib/api/permissions'
 import { feedbackTypeToApi } from '@/lib/api/validation'
 import type { GetProjectResponse, FeatureResponse, FeedbackResponse, ProjectResponse } from '@/types'
+import type { DatabaseFeedback } from '@/types/database'
 
 async function getProjectData(id: string, accountId: string) {
   try {
@@ -61,10 +62,10 @@ async function getProjectData(id: string, accountId: string) {
     }
 
     // Get unique user IDs from feedback
-    const userIds = [...new Set(feedback?.map((fb: any) => fb.user_id).filter(Boolean) || [])]
+    const userIds = [...new Set(feedback?.map((fb: { user_id: string }) => fb.user_id).filter(Boolean) || [])]
     
     // Fetch user data for all feedback creators
-    let users: any[] = []
+    let users: Array<{ id: string; name: string; email: string }> = []
     if (userIds.length > 0) {
       const { data: userData, error: usersError } = await supabase
         .from('users')
@@ -79,12 +80,12 @@ async function getProjectData(id: string, accountId: string) {
 
     // Create a map of user IDs to user data
     const userMap = new Map(
-      (users || []).map((u: any) => [u.id, { _id: u.id, name: u.name, email: u.email }])
+      (users || []).map((u: { id: string; name: string; email: string }) => [u.id, { _id: u.id, name: u.name, email: u.email }])
     )
 
     // Group feedback by feature
     const feedbackByFeature: Record<string, FeedbackResponse[]> = {}
-    feedback?.forEach((fb: any) => {
+    feedback?.forEach((fb: DatabaseFeedback) => {
       const featureId = fb.feature_id
       if (!feedbackByFeature[featureId]) {
         feedbackByFeature[featureId] = []
@@ -222,7 +223,7 @@ export default async function ProjectPage({
     .eq('account_id', user.account_id)
     .order('created_at', { ascending: false })
 
-  const projects: ProjectResponse[] = (projectsData?.map((project: any): ProjectResponse => ({
+  const projects: ProjectResponse[] = (projectsData?.map((project: { id: string; name: string; description: string; roadmap: { summary: string; riskLevel: string }; created_at: string; created_by?: { name: string; email: string } | null }): ProjectResponse => ({
     _id: project.id,
     id: project.id,
     name: project.name,

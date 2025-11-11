@@ -31,7 +31,7 @@ export function validateUUID(id: string, fieldName: string = 'ID'): void {
  * Validate required fields in an object
  */
 export function validateRequired(
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   fields: string[]
 ): void {
   const missing = fields.filter((field) => !data[field] && data[field] !== 0)
@@ -304,17 +304,17 @@ export function validatePendingChangeStatus(status: string): void {
 /**
  * Validate user story demographics (Phase 11.5)
  */
-export function validateUserStoryDemographics(demographics: any): void {
+export function validateUserStoryDemographics(demographics: Record<string, string | number | null | undefined> | null | undefined): void {
   if (demographics === null || demographics === undefined) {
     return // null/undefined is valid (optional field)
   }
-  if (typeof demographics !== 'object') {
+  if (typeof demographics !== 'object' || Array.isArray(demographics)) {
     throw APIErrors.badRequest('Demographics must be an object')
   }
-  // Allow any keys, but values should be strings or numbers
+  // Allow any keys, but values should be strings, numbers, null, or undefined
   for (const [key, value] of Object.entries(demographics)) {
-    if (typeof value !== 'string' && typeof value !== 'number' && value !== null) {
-      throw APIErrors.badRequest(`Demographic field "${key}" must be a string, number, or null`)
+    if (value !== null && value !== undefined && typeof value !== 'string' && typeof value !== 'number') {
+      throw APIErrors.badRequest(`Demographic field "${key}" must be a string, number, null, or undefined`)
     }
   }
 }
@@ -322,7 +322,7 @@ export function validateUserStoryDemographics(demographics: any): void {
 /**
  * Validate user story fields (Phase 11.5)
  */
-export function validateUserStory(data: Record<string, any>): void {
+export function validateUserStory(data: Record<string, unknown>): void {
   validateRequired(data, ['name', 'role', 'goal', 'benefit'])
   
   if (typeof data.name !== 'string' || data.name.trim().length === 0) {
