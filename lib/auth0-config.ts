@@ -68,11 +68,20 @@ function validateAuth0Env(): void {
       missing.push(key)
     } else {
       // Additional validation for AUTH0_SECRET
-      if (key === 'AUTH0_SECRET' && value.length < 32) {
-        issues.push(
-          `AUTH0_SECRET is too short (${value.length} chars). ` +
-          'It should be at least 32 characters. Generate with: openssl rand -hex 32'
-        )
+      if (key === 'AUTH0_SECRET') {
+        const trimmedValue = value.trim()
+        // Debug logging to see what's actually being read
+        if (process.env.NETLIFY || process.env.NODE_ENV === 'production') {
+          console.log(`[AUTH0_DEBUG] ${key} length: ${trimmedValue.length}`)
+          console.log(`[AUTH0_DEBUG] ${key} first 10 chars: ${trimmedValue.substring(0, 10)}...`)
+          console.log(`[AUTH0_DEBUG] ${key} last 10 chars: ...${trimmedValue.substring(trimmedValue.length - 10)}`)
+        }
+        if (trimmedValue.length < 32) {
+          issues.push(
+            `AUTH0_SECRET is too short (${trimmedValue.length} chars, raw: ${value.length} chars). ` +
+            'It should be at least 32 characters. Generate with: openssl rand -hex 32'
+          )
+        }
       }
     }
   }
