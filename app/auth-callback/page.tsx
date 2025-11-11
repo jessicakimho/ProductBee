@@ -51,6 +51,7 @@ export default function AuthCallbackPage() {
     // If there's an error, redirect to login
     if (error) {
       console.error('Auth callback error:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       // Add delay to prevent rapid redirects
       setTimeout(() => {
         window.location.href = '/api/auth/login'
@@ -75,6 +76,12 @@ export default function AuthCallbackPage() {
     if (!user && !isLoading && !error && !redirecting) {
       // Give it a bit more time - sometimes the session takes a moment
       const timer = setTimeout(() => {
+        // Log diagnostic info before redirecting
+        console.warn('Auth callback: No user detected after waiting')
+        console.warn('This might indicate:')
+        console.warn('1. AUTH0_SECRET is too short (should be 32+ chars)')
+        console.warn('2. Session cookies not being set properly')
+        console.warn('3. Cookie domain/path mismatch')
         // Try one more time to get the user
         // If still no user, redirect to login
         window.location.href = '/api/auth/login'
