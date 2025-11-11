@@ -27,6 +27,21 @@ GEMINI_API_KEY=your-gemini-api-key-here
 4. Set logout URL: `http://localhost:3000`
 5. Copy the credentials to your `.env.local`
 
+#### Auth0 Styling Configuration (Optional)
+To match the app's pundit-ui styling in the Auth0 hosted login page:
+
+1. Navigate to Branding > Universal Login in Auth0 Dashboard
+2. Enable "Customize Login Page"
+3. Use the "Classic" experience for full control
+4. Apply custom CSS (see `lib/auth0-config.ts` for example CSS)
+5. Set logo in Branding > Universal Login > Logo
+6. Configure colors:
+   - Primary: `#a855f7`
+   - Background: `#f5f5f5`
+   - Text: `#0d0d0d`
+
+See `lib/auth0-config.ts` for detailed styling instructions.
+
 ### Supabase
 1. Sign up at https://supabase.com
 2. Create a new project

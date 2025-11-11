@@ -101,26 +101,27 @@ export default function TicketCreateForm({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-card shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-[#d9d9d9] px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-[#0d0d0d]">
             Create New Ticket
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-[#404040] hover:text-[#0d0d0d] transition-colors"
+            disabled={isCreating}
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Title */}
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Title <span className="text-red-500">*</span>
             </label>
@@ -129,9 +130,10 @@ export default function TicketCreateForm({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="Enter ticket title"
               required
+              disabled={isCreating}
             />
           </div>
 
@@ -139,7 +141,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Description <span className="text-red-500">*</span>
             </label>
@@ -148,9 +150,10 @@ export default function TicketCreateForm({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="Describe the ticket in detail..."
               required
+              disabled={isCreating}
             />
           </div>
 
@@ -159,7 +162,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="ticketType"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Ticket Type
               </label>
@@ -167,7 +170,8 @@ export default function TicketCreateForm({
                 id="ticketType"
                 value={ticketType}
                 onChange={(e) => setTicketType(e.target.value as typeof ticketType)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
+                disabled={isCreating}
               >
                 {Object.entries(TICKET_TYPES).map(([key, value]) => (
                   <option key={value} value={value}>
@@ -180,7 +184,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="priority"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Priority <span className="text-red-500">*</span>
               </label>
@@ -188,8 +192,9 @@ export default function TicketCreateForm({
                 id="priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as typeof priority)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
                 required
+                disabled={isCreating}
               >
                 {Object.entries(PRIORITY_LEVELS).map(([key, value]) => (
                   <option key={value} value={value}>
@@ -205,7 +210,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="assignedTo"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Assign To
               </label>
@@ -225,7 +230,7 @@ export default function TicketCreateForm({
             <div>
               <label
                 htmlFor="storyPoints"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-[#404040] mb-2"
               >
                 Story Points
               </label>
@@ -236,8 +241,9 @@ export default function TicketCreateForm({
                 max="100"
                 value={storyPoints || ''}
                 onChange={(e) => setStoryPoints(e.target.value ? parseInt(e.target.value) : null)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
                 placeholder="Optional"
+                disabled={isCreating}
               />
             </div>
           </div>
@@ -246,7 +252,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="effortEstimateWeeks"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Estimated Effort (Weeks) <span className="text-red-500">*</span>
             </label>
@@ -257,8 +263,9 @@ export default function TicketCreateForm({
               step="0.5"
               value={effortEstimateWeeks}
               onChange={(e) => setEffortEstimateWeeks(parseFloat(e.target.value) || 1)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               required
+              disabled={isCreating}
             />
           </div>
 
@@ -266,7 +273,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="acceptanceCriteria"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Acceptance Criteria
             </label>
@@ -275,8 +282,9 @@ export default function TicketCreateForm({
               value={acceptanceCriteria}
               onChange={(e) => setAcceptanceCriteria(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
               placeholder="Define the acceptance criteria for this ticket..."
+              disabled={isCreating}
             />
           </div>
 
@@ -284,7 +292,7 @@ export default function TicketCreateForm({
           <div>
             <label
               htmlFor="labels"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-[#404040] mb-2"
             >
               Labels
             </label>
@@ -300,13 +308,15 @@ export default function TicketCreateForm({
                     handleAddLabel()
                   }
                 }}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="flex-1 px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d]"
                 placeholder="Add a label and press Enter"
+                disabled={isCreating}
               />
               <button
                 type="button"
                 onClick={handleAddLabel}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 bg-[#d9d9d9] text-[#0d0d0d] rounded-full hover:bg-[#c9c9c9] transition-colors"
+                disabled={isCreating}
               >
                 Add
               </button>
@@ -316,13 +326,14 @@ export default function TicketCreateForm({
                 {labels.map((label) => (
                   <span
                     key={label}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-[#a855f7] bg-opacity-10 text-[#a855f7] rounded-full text-sm"
                   >
                     {label}
                     <button
                       type="button"
                       onClick={() => handleRemoveLabel(label)}
-                      className="hover:text-blue-600 dark:hover:text-blue-300"
+                      className="hover:text-[#9333ea] transition-colors"
+                      disabled={isCreating}
                     >
                       ×
                     </button>
@@ -334,24 +345,25 @@ export default function TicketCreateForm({
 
           {/* Reporter Info */}
           {profile && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-[#404040]">
               Reporter: {profile.name} ({profile.email})
             </div>
           )}
 
-          {/* Submit Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Form Actions */}
+          <div className="flex items-center justify-end gap-4 pt-4 border-t border-[#d9d9d9]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="px-4 py-2 text-[#404040] hover:bg-[#f5f5f5] rounded-full transition-colors"
+              disabled={isCreating}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isCreating || !title.trim() || !description.trim()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-soft"
             >
               {isCreating ? 'Creating...' : 'Create Ticket'}
             </button>

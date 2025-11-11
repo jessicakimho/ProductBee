@@ -345,7 +345,7 @@ export interface GetPendingChangesResponse {
 export interface UserStoryResponse {
   _id: string
   id: string
-  projectId: string
+  projectId?: string | null // Optional: user stories are now global (account-level)
   name: string
   role: string
   goal: string
@@ -367,7 +367,7 @@ export interface UserStoryResponse {
 }
 
 export interface CreateUserStoryRequest {
-  projectId: string
+  projectId?: string // Optional: user stories are now global (account-level)
   name: string
   role: string
   goal: string

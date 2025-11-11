@@ -49,7 +49,7 @@ export async function PUT(
 
     const supabase = createServerClient()
 
-    // Verify user story exists and belongs to user's account
+    // Verify user story exists and belongs to user's account (no project_id check needed for global user stories)
     const { data: existingUserStory, error: fetchError } = await supabase
       .from('user_stories')
       .select('id, account_id, project_id, created_by')
@@ -114,13 +114,13 @@ export async function PUT(
     const formattedUserStory = {
       _id: userStory.id,
       id: userStory.id,
-      projectId: userStory.project_id,
+      projectId: userStory.project_id || null,
       name: userStory.name,
       role: userStory.role,
       goal: userStory.goal,
-      benefit: userStory.benefit,
-      demographics: userStory.demographics,
-      createdBy: creator
+        benefit: userStory.benefit,
+        demographics: userStory.demographics,
+        createdBy: creator
         ? {
             _id: creator.id,
             name: creator.name,

@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  # Netlify Next.js plugin handles the publish directory automatically
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+

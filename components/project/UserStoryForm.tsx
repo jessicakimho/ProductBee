@@ -7,7 +7,7 @@ import type { UserStoryResponse, CreateUserStoryRequest, UpdateUserStoryRequest 
 interface UserStoryFormProps {
   isOpen: boolean
   onClose: () => void
-  projectId: string
+  projectId?: string // Optional: user stories are now global
   userStory?: UserStoryResponse | null
   onSubmit: (data: CreateUserStoryRequest | UpdateUserStoryRequest) => Promise<void>
   isSubmitting?: boolean
@@ -94,9 +94,9 @@ export default function UserStoryForm({
       }
       await onSubmit(updateData)
     } else {
-      // Create new user story
+      // Create new user story (projectId is optional - user stories are now global)
       const createData: CreateUserStoryRequest = {
-        projectId,
+        ...(projectId && { projectId }), // Only include projectId if provided
         name: formData.name.trim(),
         role: formData.role.trim(),
         goal: formData.goal.trim(),

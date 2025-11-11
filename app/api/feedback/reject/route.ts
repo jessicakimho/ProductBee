@@ -50,13 +50,25 @@ export async function POST(request: NextRequest) {
       throw APIErrors.internalError('Failed to update feedback')
     }
 
+    // Fetch user data for the feedback creator
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, name, email')
+      .eq('id', updatedFeedback.user_id)
+      .eq('account_id', user.account_id)
+      .single()
+
     // Format response (convert DB format to API format)
     const formattedFeedback = {
       _id: updatedFeedback.id,
       id: updatedFeedback.id,
       projectId: updatedFeedback.project_id,
       featureId: updatedFeedback.feature_id,
-      userId: updatedFeedback.user_id,
+      userId: userData && !userError ? {
+        _id: userData.id,
+        name: userData.name,
+        email: userData.email,
+      } : null,
       type: feedbackTypeToApi(updatedFeedback.type), // Convert DB -> API
       content: updatedFeedback.content,
       proposedRoadmap: updatedFeedback.proposed_roadmap,

@@ -17,7 +17,7 @@ interface UseUserStoriesReturn {
   userStories: UserStoryResponse[]
   isLoading: boolean
   error: string | null
-  fetchUserStories: (projectId: string) => Promise<void>
+  fetchUserStories: (projectId?: string) => Promise<void> // projectId is now optional for global user stories
   createUserStory: (data: CreateUserStoryRequest) => Promise<UserStoryResponse | null>
   updateUserStory: (userStoryId: string, data: UpdateUserStoryRequest) => Promise<UserStoryResponse | null>
   deleteUserStory: (userStoryId: string) => Promise<boolean>
@@ -33,9 +33,6 @@ interface UseUserStoriesReturn {
 
 const MAX_CACHED_STORIES = 50
 
-// Local cache for user stories (last 50 per project)
-const userStoriesCache = new Map<string, { stories: UserStoryResponse[]; timestamp: number }>()
-
 export function useUserStories(): UseUserStoriesReturn {
   const [userStories, setUserStories] = useState<UserStoryResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -46,49 +43,51 @@ export function useUserStories(): UseUserStoriesReturn {
   const [isAssigning, setIsAssigning] = useState(false)
   const [isCheckingAlignment, setIsCheckingAlignment] = useState(false)
 
+  // Cache state (using React state for cache)
+  const [cache, setCache] = useState<{ stories: UserStoryResponse[]; timestamp: number } | null>(null)
+
   // Load from cache if available
-  const loadFromCache = useCallback((projectId: string): UserStoryResponse[] | null => {
-    const cached = userStoriesCache.get(projectId)
-    if (cached) {
+  const loadFromCache = useCallback((): UserStoryResponse[] | null => {
+    if (cache) {
       // Cache is valid (no expiration for now, but we can add it later)
-      return cached.stories
+      return cache.stories
     }
     return null
-  }, [])
+  }, [cache])
 
   // Save to cache
-  const saveToCache = useCallback((projectId: string, stories: UserStoryResponse[]) => {
+  const saveToCache = useCallback((stories: UserStoryResponse[]) => {
     // Limit to last 50 stories
     const limitedStories = stories.slice(0, MAX_CACHED_STORIES)
-    userStoriesCache.set(projectId, {
+    setCache({
       stories: limitedStories,
       timestamp: Date.now(),
     })
   }, [])
 
-  // Clear cache for a project
-  const clearCache = useCallback((projectId: string) => {
-    userStoriesCache.delete(projectId)
+  // Clear cache
+  const clearCache = useCallback(() => {
+    setCache(null)
   }, [])
 
   const fetchUserStories = useCallback(
-    async (projectId: string) => {
+    async (projectId?: string) => {
       try {
         setIsLoading(true)
         setError(null)
 
-        // Try cache first
-        const cached = loadFromCache(projectId)
+        // Try cache first (global cache, not project-specific)
+        const cached = loadFromCache()
         if (cached) {
           setUserStories(cached)
           setIsLoading(false)
           // Still fetch in background to update cache
-          fetch(`/api/user-story/project/${projectId}`)
+          fetch('/api/user-story')
             .then((res) => res.json())
             .then((data) => {
               if (data.success && data.data?.userStories) {
                 setUserStories(data.data.userStories)
-                saveToCache(projectId, data.data.userStories)
+                saveToCache(data.data.userStories)
               }
             })
             .catch(() => {
@@ -97,7 +96,9 @@ export function useUserStories(): UseUserStoriesReturn {
           return
         }
 
-        const response = await fetch(`/api/user-story/project/${projectId}`)
+        // Fetch all user stories for the account (global, not project-specific)
+        // projectId parameter is kept for backward compatibility but ignored
+        const response = await fetch('/api/user-story')
         const responseData = await response.json()
 
         if (!response.ok || !responseData.success) {
@@ -106,7 +107,7 @@ export function useUserStories(): UseUserStoriesReturn {
 
         const stories = responseData.data?.userStories || []
         setUserStories(stories)
-        saveToCache(projectId, stories)
+        saveToCache(stories)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to fetch user stories'
         setError(message)
@@ -144,12 +145,12 @@ export function useUserStories(): UseUserStoriesReturn {
         const newUserStory = responseData.data?.userStory
         if (newUserStory) {
           // Update local state
-          setUserStories((prev) => [newUserStory, ...prev])
-          // Update cache
-          const cached = userStoriesCache.get(data.projectId)
-          if (cached) {
-            saveToCache(data.projectId, [newUserStory, ...cached.stories])
-          }
+          setUserStories((prev) => {
+            const updated = [newUserStory, ...prev]
+            // Update cache with the new state
+            saveToCache(updated)
+            return updated
+          })
           toast.success('User story created successfully')
         }
 
@@ -163,7 +164,7 @@ export function useUserStories(): UseUserStoriesReturn {
         setIsCreating(false)
       }
     },
-    [saveToCache]
+    [loadFromCache, saveToCache]
   )
 
   const updateUserStory = useCallback(
@@ -195,15 +196,13 @@ export function useUserStories(): UseUserStoriesReturn {
           setUserStories((prev) =>
             prev.map((story) => (story.id === userStoryId || story._id === userStoryId ? updatedUserStory : story))
           )
-          // Update cache (find project ID from updated story)
-          if (updatedUserStory.projectId) {
-            const cached = userStoriesCache.get(updatedUserStory.projectId)
-            if (cached) {
-              const updatedStories = cached.stories.map((story) =>
-                story.id === userStoryId || story._id === userStoryId ? updatedUserStory : story
-              )
-              saveToCache(updatedUserStory.projectId, updatedStories)
-            }
+          // Update cache if available
+          const cached = loadFromCache()
+          if (cached) {
+            const updatedStories = cached.map((story) =>
+              (story.id === userStoryId || story._id === userStoryId) ? updatedUserStory : story
+            )
+            saveToCache(updatedStories)
           }
           toast.success('User story updated successfully')
         }
@@ -218,7 +217,7 @@ export function useUserStories(): UseUserStoriesReturn {
         setIsUpdating(false)
       }
     },
-    [saveToCache]
+    [loadFromCache, saveToCache]
   )
 
   const deleteUserStory = useCallback(
@@ -226,10 +225,6 @@ export function useUserStories(): UseUserStoriesReturn {
       try {
         setIsDeleting(true)
         setError(null)
-
-        // Find the user story to get projectId for cache update
-        const userStory = userStories.find((s) => s.id === userStoryId || s._id === userStoryId)
-        const projectId = userStory?.projectId
 
         const response = await fetch(`/api/user-story/${userStoryId}`, {
           method: 'DELETE',
@@ -247,14 +242,12 @@ export function useUserStories(): UseUserStoriesReturn {
         // Update local state
         setUserStories((prev) => prev.filter((story) => story.id !== userStoryId && story._id !== userStoryId))
         // Update cache
-        if (projectId) {
-          const cached = userStoriesCache.get(projectId)
-          if (cached) {
-            const updatedStories = cached.stories.filter(
-              (story) => story.id !== userStoryId && story._id !== userStoryId
-            )
-            saveToCache(projectId, updatedStories)
-          }
+        const cached = loadFromCache()
+        if (cached) {
+          const updatedStories = cached.filter(
+            (story) => story.id !== userStoryId && story._id !== userStoryId
+          )
+          saveToCache(updatedStories)
         }
 
         toast.success('User story deleted successfully')
@@ -268,7 +261,7 @@ export function useUserStories(): UseUserStoriesReturn {
         setIsDeleting(false)
       }
     },
-    [userStories, saveToCache]
+    [loadFromCache, saveToCache]
   )
 
   const assignUserStoryToTicket = useCallback(

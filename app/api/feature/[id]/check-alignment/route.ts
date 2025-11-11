@@ -40,11 +40,11 @@ export async function POST(
     // Verify project access
     await requireProjectAccess(user, ticket.project_id)
 
-    // Get all user stories for the project
+    // Get all user stories for the account (user stories are now global/account-level)
+    // We fetch all user stories since they can be linked to any project
     const { data: userStories, error: userStoriesError } = await supabase
       .from('user_stories')
       .select('id, name, role, goal, benefit, demographics')
-      .eq('project_id', ticket.project_id)
       .eq('account_id', user.account_id)
 
     if (userStoriesError) {

@@ -6,6 +6,7 @@ import { getUserFromSession } from '@/lib/api/permissions'
 import { validateRequired, validateJsonBody, priorityToApi, statusToApi } from '@/lib/api/validation'
 import { handleError, successResponse, APIErrors } from '@/lib/api/errors'
 import { HTTP_STATUS, DB_FEATURE_STATUS } from '@/lib/constants'
+import { getProjectImage } from '@/lib/met-museum'
 import type { GenerateRoadmapRequest, GenerateRoadmapResponse } from '@/types/api'
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,21 @@ export async function POST(request: NextRequest) {
       throw APIErrors.internalError('Invalid roadmap data received from AI')
     }
 
+    // Fetch a random image from Met Museum API
+    console.log('[Roadmap Generate] Fetching project image from Met Museum')
+    let imageUrl: string | null = null
+    try {
+      imageUrl = await getProjectImage()
+      if (imageUrl) {
+        console.log('[Roadmap Generate] Successfully fetched image:', imageUrl)
+      } else {
+        console.log('[Roadmap Generate] No image fetched, will use gradient')
+      }
+    } catch (imageError) {
+      console.error('[Roadmap Generate] Error fetching image (will use gradient):', imageError)
+      // Don't fail the request if image fetch fails, just use gradient
+    }
+
     // Create project with account_id for account isolation
     const { data: project, error: projectError } = await supabase
       .from('projects')
@@ -58,6 +74,7 @@ export async function POST(request: NextRequest) {
         roadmap: {
           summary: roadmapData.summary,
           riskLevel: roadmapData.riskLevel || 'medium',
+          imageUrl: imageUrl || undefined, // Only include if we have an image
         },
       })
       .select()

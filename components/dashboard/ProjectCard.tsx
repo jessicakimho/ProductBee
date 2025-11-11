@@ -72,7 +72,7 @@ export default function ProjectCard({ project }: { project: ProjectResponse }) {
                 riskColors[riskLevel] || 'bg-gray-100 text-gray-800'
               }`}
             >
-              {project.roadmap?.riskLevel || 'Low'} Risk
+              {riskLevel} risk
             </span>
             {project.createdBy && (
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { Gantt, ViewMode } from 'gantt-task-react'
 import type { Task } from 'gantt-task-react'
 import 'gantt-task-react/dist/index.css'
@@ -26,14 +26,14 @@ const defaultColor = '#6b7280' // gray-500
 // Custom Tooltip Component
 const TooltipContent = ({ task, fontSize, fontFamily }: { task: Task; fontSize: string; fontFamily: string }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-      <div className="font-semibold text-gray-900 dark:text-white mb-1" style={{ fontSize, fontFamily }}>
+    <div className="bg-white p-3 rounded-card-inner shadow-soft border border-[#d9d9d9]">
+      <div className="font-semibold text-[#0d0d0d] mb-1" style={{ fontSize, fontFamily }}>
         {task.name}
       </div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-[#404040]">
         {task.start.toLocaleDateString()} - {task.end.toLocaleDateString()}
       </div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-[#404040]">
         Progress: {task.progress}%
       </div>
     </div>
@@ -88,6 +88,8 @@ function featureToTask(feature: FeatureResponse, allFeatures: FeatureResponse[])
 export default function GanttView({ features, onTaskClick }: GanttViewProps) {
   // Create a map to store feature data by task ID
   const featureMapRef = useRef<Map<string, FeatureResponse>>(new Map())
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerHeight, setContainerHeight] = useState(600)
 
   // Convert features to Gantt tasks
   const tasks = useMemo(() => {
@@ -110,6 +112,51 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
     return tasksWithTimeline
   }, [features])
 
+  // Calculate dynamic height based on container and tasks
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect()
+        // Use the full container height, but ensure minimum height for all tasks
+        const availableHeight = containerRect.height || window.innerHeight - 200
+        const minHeightForTasks = tasks.length * 50 + 200
+        // Use the larger of available height or minimum needed for tasks
+        // If container height is 0 or very small, use a reasonable default
+        const calculatedHeight = availableHeight > 100 
+          ? Math.max(availableHeight, minHeightForTasks)
+          : Math.max(window.innerHeight - 200, minHeightForTasks)
+        setContainerHeight(calculatedHeight)
+      }
+    }
+
+    // Initial calculation with requestAnimationFrame to ensure DOM is ready
+    const rafId = requestAnimationFrame(() => {
+      updateHeight()
+      // Also do a delayed update to catch any layout changes
+      setTimeout(updateHeight, 50)
+    })
+    
+    // Update on window resize
+    window.addEventListener('resize', updateHeight)
+    
+    // Use ResizeObserver for more accurate tracking when container size changes
+    let resizeObserver: ResizeObserver | null = null
+    if (containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        requestAnimationFrame(updateHeight)
+      })
+      resizeObserver.observe(containerRef.current)
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', updateHeight)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [tasks.length])
+
   const handleTaskClick = (task: Task) => {
     const feature = featureMapRef.current.get(task.id)
     if (feature && onTaskClick) {
@@ -119,9 +166,9 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 border border-gray-200 dark:border-gray-700">
-        <div className="text-center text-gray-500 dark:text-gray-400">
-          <p className="text-lg mb-2">No timeline data available</p>
+      <div className="w-full h-full flex items-center justify-center bg-white rounded-card shadow-soft border border-[#d9d9d9]">
+        <div className="text-center text-[#404040]">
+          <p className="text-lg mb-2 font-medium text-[#0d0d0d]">No timeline data available</p>
           <p className="text-sm">Features need start dates, end dates, or durations to appear in the Gantt chart.</p>
         </div>
       </div>
@@ -129,26 +176,24 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto">
-      <div className="p-4">
-        <Gantt
-          tasks={tasks}
-          viewMode={ViewMode.Month}
-          locale="en-US"
-          onDateChange={() => {}} // Read-only for now
-          onTaskDelete={() => {}} // Read-only for now
-          onProgressChange={() => {}} // Read-only for now
-          onDoubleClick={handleTaskClick}
-          onClick={handleTaskClick}
-          listCellWidth=""
-          columnWidth={65}
-          rowHeight={50}
-          ganttHeight={Math.max(400, tasks.length * 50 + 100)}
-          preStepsCount={1}
-          todayColor="rgba(59, 130, 246, 0.3)" // blue with opacity
-          TooltipContent={TooltipContent}
-        />
-      </div>
+    <div ref={containerRef} className="w-full h-full" style={{ minHeight: 0 }}>
+      <Gantt
+        tasks={tasks}
+        viewMode={ViewMode.Month}
+        locale="en-US"
+        onDateChange={() => {}} // Read-only for now
+        onTaskDelete={() => {}} // Read-only for now
+        onProgressChange={() => {}} // Read-only for now
+        onDoubleClick={handleTaskClick}
+        onClick={handleTaskClick}
+        listCellWidth=""
+        columnWidth={65}
+        rowHeight={50}
+        ganttHeight={containerHeight}
+        preStepsCount={1}
+        todayColor="rgba(168, 85, 247, 0.2)" // purple with opacity to match app theme
+        TooltipContent={TooltipContent}
+      />
     </div>
   )
 }

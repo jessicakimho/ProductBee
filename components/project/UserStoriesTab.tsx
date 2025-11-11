@@ -9,7 +9,7 @@ import UserStoryForm from './UserStoryForm'
 import type { UserStoryResponse, FeatureResponse, CreateUserStoryRequest, UpdateUserStoryRequest } from '@/types'
 
 interface UserStoriesTabProps {
-  projectId: string
+  projectId?: string // Optional: user stories are now global
   userRole?: string
   features: FeatureResponse[]
 }
@@ -37,10 +37,10 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
 
   const canEdit = userRole === ROLES.PM || userRole === ROLES.ADMIN
 
-  // Fetch user stories on mount
+  // Fetch all user stories on mount (global, not project-specific)
   useEffect(() => {
-    fetchUserStories(projectId)
-  }, [projectId, fetchUserStories])
+    fetchUserStories() // No projectId needed - fetches all user stories for account
+  }, [fetchUserStories])
 
   // Get linked tickets for a user story
   const getLinkedTickets = (userStory: UserStoryResponse): FeatureResponse[] => {
@@ -49,10 +49,11 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
   }
 
   const handleCreateUserStory = async (data: CreateUserStoryRequest) => {
+    // projectId is optional - user stories are now global
     await createUserStory(data)
     setIsFormOpen(false)
     // Refresh user stories
-    await fetchUserStories(projectId)
+    await fetchUserStories()
   }
 
   const handleUpdateUserStory = async (data: UpdateUserStoryRequest) => {
@@ -60,7 +61,7 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
       await updateUserStory(editingUserStory.id || editingUserStory._id, data)
       setEditingUserStory(null)
       // Refresh user stories
-      await fetchUserStories(projectId)
+      await fetchUserStories()
     }
   }
 
@@ -71,7 +72,7 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
       setDeletingUserStoryId(null)
       if (success) {
         // Refresh user stories
-        await fetchUserStories(projectId)
+        await fetchUserStories()
       }
     }
   }
@@ -79,13 +80,13 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
   const handleLinkTicket = async (userStoryId: string, ticketId: string) => {
     await assignUserStoryToTicket(ticketId, userStoryId)
     // Refresh user stories to get updated linkedTicketIds
-    await fetchUserStories(projectId)
+    await fetchUserStories()
   }
 
   const handleUnlinkTicket = async (userStoryId: string, ticketId: string) => {
     await unassignUserStoryFromTicket(ticketId, userStoryId)
     // Refresh user stories to get updated linkedTicketIds
-    await fetchUserStories(projectId)
+    await fetchUserStories()
   }
 
   const handleEditClick = (userStory: UserStoryResponse) => {
@@ -99,19 +100,16 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-[#0d0d0d]">User Stories</h2>
-          <p className="text-sm text-[#404040] mt-1">
-            Define user personas and link them to tickets for better alignment
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* Description and Create Button */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <p className="text-sm text-[#404040] flex-1">
+          Define user personas and link them to tickets for better alignment. User stories are global and can be used across all projects.
+        </p>
         {canEdit && (
           <button
             onClick={() => setIsFormOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
+            className="flex items-center gap-2 px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft flex-shrink-0"
           >
             <Plus className="w-5 h-5" />
             Create User Story
@@ -140,11 +138,11 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
 
       {/* Empty State */}
       {!isLoading && userStories.length === 0 && !error && (
-        <div className="text-center py-12 bg-white rounded-card shadow-soft border border-[#d9d9d9]">
+        <div className="text-center py-16 bg-white rounded-card shadow-soft border border-[#d9d9d9]">
           <Sparkles className="w-12 h-12 text-[#404040] mx-auto mb-4" />
           <h3 className="text-lg font-medium text-[#0d0d0d] mb-2">No user stories yet</h3>
-          <p className="text-sm text-[#404040] mb-4">
-            Create user stories to define personas and link them to tickets
+          <p className="text-sm text-[#404040] mb-6 max-w-md mx-auto">
+            Create user stories to define personas and link them to tickets across all your projects
           </p>
           {canEdit && (
             <button
@@ -160,7 +158,7 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
 
       {/* User Stories List */}
       {!isLoading && userStories.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {userStories.map((userStory) => {
             const linkedTickets = getLinkedTickets(userStory)
             return (
@@ -186,7 +184,7 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
       <UserStoryForm
         isOpen={isFormOpen}
         onClose={handleFormClose}
-        projectId={projectId}
+        projectId={projectId} // Optional - for backward compatibility
         userStory={editingUserStory}
         onSubmit={editingUserStory ? handleUpdateUserStory : handleCreateUserStory}
         isSubmitting={isCreating || isUpdating}

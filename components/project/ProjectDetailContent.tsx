@@ -1,9 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useUser } from '@auth0/nextjs-auth0/client'
-import { ArrowLeft } from 'lucide-react'
 import {
   DndContext,
   DragOverlay,
@@ -16,6 +13,9 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
+import {
+  restrictToWindowEdges,
+} from '@dnd-kit/modifiers'
 import {
   SortableContext,
   sortableKeyboardCoordinates,
@@ -37,16 +37,10 @@ import PendingChangesList from '@/components/modals/PendingChangesList'
 import UserStoriesTab from './UserStoriesTab'
 import type { GetProjectResponse, FeatureResponse } from '@/types'
 
-interface ProjectDetailClientProps {
-  projectData: GetProjectResponse
+interface ProjectDetailContentProps {
+  projectId: string
+  initialData: GetProjectResponse
   userRole?: string
-}
-
-// Risk level color mapping
-const riskColors: Record<string, string> = {
-  low: 'bg-green-100 text-green-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  high: 'bg-red-100 text-red-800',
 }
 
 // Feature status columns (using API format values)
@@ -149,12 +143,11 @@ function DroppableColumn({
   )
 }
 
-export default function ProjectDetailClient({
-  projectData: initialData,
+export default function ProjectDetailContent({
+  projectId,
+  initialData,
   userRole,
-}: ProjectDetailClientProps) {
-  const router = useRouter()
-  const { user } = useUser()
+}: ProjectDetailContentProps) {
   const [selectedFeature, setSelectedFeature] = useState<FeatureResponse | null>(null)
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false)
   const [isPendingChangesOpen, setIsPendingChangesOpen] = useState(false)
@@ -177,7 +170,6 @@ export default function ProjectDetailClient({
     }
   }, [currentView])
 
-  const projectId = initialData.project._id || initialData.project.id
   const { projectData, refetch } = useProject(projectId)
   const { updateFeatureStatus } = useFeature()
   const {
@@ -187,7 +179,6 @@ export default function ProjectDetailClient({
     proposeStatusChange,
     approveStatusChange,
     rejectStatusChange,
-    isProposing,
     isApproving,
     isRejecting,
   } = usePendingChanges()
@@ -237,6 +228,9 @@ export default function ProjectDetailClient({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  // Modifiers to improve drag behavior (don't restrict to vertical axis for kanban cross-column dragging)
+  const modifiers = [restrictToWindowEdges]
 
   const handleFeatureClick = (feature: FeatureResponse) => {
     setSelectedFeature(feature)
@@ -337,92 +331,51 @@ export default function ProjectDetailClient({
     return displayData.features.filter((f) => f.status === status)
   }
 
-  const riskLevel = displayData.project.roadmap.riskLevel?.toLowerCase() || 'low'
-
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
-      <nav className="bg-[#f5f5f5] border-b border-[#d9d9d9]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16 gap-4">
-            <a
-              href="/dashboard"
-              className="flex items-center gap-2 text-[#404040] hover:text-[#0d0d0d] transition-colors"
+    <div className="h-full flex flex-col">
+      {/* Header with Tabs */}
+      <div className="flex items-center justify-between py-4 px-4 border-b border-[#d9d9d9] bg-white flex-shrink-0">
+        <h2 className="text-2xl font-bold text-[#0d0d0d]">
+          {currentView === 'user-stories' ? 'User Stories' : currentView === 'gantt' ? 'Gantt' : 'Features'}
+        </h2>
+        <div className="flex items-center gap-4">
+          {pendingCount > 0 && currentView !== 'user-stories' && (
+            <PendingChangesNotification
+              count={pendingCount}
+              onClick={() => setIsPendingChangesOpen(true)}
+            />
+          )}
+          <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
+          {!isViewer && currentView !== 'user-stories' && (
+            <button
+              onClick={() => setIsCreateTicketOpen(true)}
+              className="px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
             >
-              <ArrowLeft className="w-5 h-5" />
-              Back to Dashboard
-            </a>
-          </div>
+              + Create Ticket
+            </button>
+          )}
         </div>
-      </nav>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-[#0d0d0d] mb-2">
-                {displayData.project.name}
-              </h1>
-              <p className="text-[#404040]">
-                {displayData.project.description}
-              </p>
-            </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                riskColors[riskLevel] || 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {riskLevel} risk
-            </span>
-          </div>
-        </div>
-
-        {/* View Toggle and Actions */}
-        {currentView !== 'user-stories' && (
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[#0d0d0d]">
-              Features
-            </h2>
-            <div className="flex items-center gap-4">
-              {pendingCount > 0 && (
-                <PendingChangesNotification
-                  count={pendingCount}
-                  onClick={() => setIsPendingChangesOpen(true)}
-                />
-              )}
-              <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
-              {!isViewer && (
-                <button
-                  onClick={() => setIsCreateTicketOpen(true)}
-                  className="px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] transition-colors shadow-soft"
-                >
-                  + Create Ticket
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
+      {/* Content Area */}
+      <div className={`flex-1 overflow-hidden ${currentView === 'gantt' ? '' : 'overflow-y-auto px-4 py-4'}`}>
         {/* User Stories View */}
         {currentView === 'user-stories' && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex-1"></div>
-              <ViewToggle currentView={currentView} onViewChange={setCurrentView} />
-            </div>
-            <UserStoriesTab
-              projectId={projectId}
-              userRole={userRole}
-              features={displayData.features}
-            />
-          </div>
+          <UserStoriesTab
+            projectId={projectId}
+            userRole={userRole}
+            features={displayData.features}
+          />
         )}
 
         {/* Gantt View */}
         {currentView === 'gantt' && (
-          <GanttView
-            features={displayData.features}
-            onTaskClick={handleFeatureClick}
-          />
+          <div className="h-full w-full">
+            <GanttView
+              features={displayData.features}
+              onTaskClick={handleFeatureClick}
+            />
+          </div>
         )}
 
         {/* Backlog/Kanban View */}
@@ -430,6 +383,7 @@ export default function ProjectDetailClient({
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            modifiers={modifiers}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
@@ -449,9 +403,15 @@ export default function ProjectDetailClient({
                 )
               })}
             </div>
-            <DragOverlay>
+            <DragOverlay
+              adjustScale={false}
+              dropAnimation={null}
+              style={{
+                cursor: 'grabbing',
+              }}
+            >
               {activeFeature ? (
-                <div className="opacity-50">
+                <div className="shadow-lg opacity-95" style={{ width: '300px' }}>
                   <FeatureCard
                     feature={activeFeature}
                     onClick={() => {}}
@@ -462,8 +422,9 @@ export default function ProjectDetailClient({
             </DragOverlay>
           </DndContext>
         )}
-      </main>
+      </div>
 
+      {/* Modals */}
       {selectedFeature && (
         <FeatureModal
           key={`feature-modal-${selectedFeature._id || selectedFeature.id}`}
@@ -494,7 +455,6 @@ export default function ProjectDetailClient({
           refetch()
         }}
       />
-
 
       {/* Pending Changes Modal */}
       <PendingChangesList

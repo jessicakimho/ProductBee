@@ -81,18 +81,21 @@ export async function POST(request: NextRequest) {
         ai_analysis: aiAnalysis || null,
         status: 'pending',
       })
-      .select(`
-        *,
-        user_id:users!feedback_user_id_fkey (
-          name,
-          email
-        )
-      `)
+      .select()
       .single()
 
     if (feedbackError || !feedback) {
       throw APIErrors.internalError('Failed to create feedback')
     }
+
+    // Fetch user data separately to ensure we get it correctly
+    // This is more reliable than relying on the foreign key join
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('id, name, email')
+      .eq('id', user.id)
+      .eq('account_id', user.account_id)
+      .single()
 
     // Format response (convert DB format to API format)
     const formattedFeedback = {
@@ -100,11 +103,15 @@ export async function POST(request: NextRequest) {
       id: feedback.id,
       projectId: feedback.project_id,
       featureId: feedback.feature_id,
-      userId: feedback.user_id ? {
-        _id: feedback.user_id.id,
-        name: feedback.user_id.name,
-        email: feedback.user_id.email,
-      } : null,
+      userId: userData && !userError ? {
+        _id: userData.id,
+        name: userData.name,
+        email: userData.email,
+      } : {
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+      },
       type: feedbackTypeToApi(feedback.type), // Convert DB -> API
       content: feedback.content,
       proposedRoadmap: feedback.proposed_roadmap,

@@ -221,46 +221,46 @@ export default function EmployeeAssignmentDropdown({
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case ROLES.ADMIN:
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+        return 'bg-[#a855f7] bg-opacity-10 text-[#a855f7]'
       case ROLES.PM:
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+        return 'bg-[#a855f7] bg-opacity-10 text-[#a855f7]'
       case ROLES.ENGINEER:
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+        return 'bg-green-100 text-green-800'
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   // Helper function to get specialization badge color
   const getSpecializationBadgeColor = (specialization: string | null | undefined) => {
-    if (!specialization) return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+    if (!specialization) return 'bg-gray-100 text-[#404040]'
 
     switch (specialization) {
       case SPECIALIZATIONS.BACKEND:
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+        return 'bg-orange-100 text-orange-800'
       case SPECIALIZATIONS.FRONTEND:
-        return 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300'
+        return 'bg-pink-100 text-pink-800'
       case SPECIALIZATIONS.QA:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+        return 'bg-yellow-100 text-yellow-800'
       case SPECIALIZATIONS.DEVOPS:
-        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300'
+        return 'bg-indigo-100 text-indigo-800'
       default:
-        return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+        return 'bg-gray-100 text-[#404040]'
     }
   }
 
   // Helper function to get workload color
   const getWorkloadColor = (ticketCount: number, storyPointCount: number) => {
     if (ticketCount === 0 && storyPointCount === 0) {
-      return 'text-green-600 dark:text-green-400'
+      return 'text-green-600'
     }
     if (ticketCount <= 2 && storyPointCount <= 8) {
-      return 'text-blue-600 dark:text-blue-400'
+      return 'text-[#a855f7]'
     }
     if (ticketCount <= 5 && storyPointCount <= 13) {
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-yellow-600'
     }
-    return 'text-red-600 dark:text-red-400'
+    return 'text-red-600'
   }
 
   const handleSelect = (userId: string) => {
@@ -287,13 +287,13 @@ export default function EmployeeAssignmentDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled || membersLoading}
-        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed text-left flex items-center justify-between"
+        className="w-full px-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d] disabled:opacity-50 disabled:cursor-not-allowed text-left flex items-center justify-between"
       >
         <span className="flex items-center gap-2">
           {selectedMember ? (
             <>
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-gray-900 dark:text-white">{selectedMember.name}</span>
+              <User className="w-4 h-4 text-[#404040]" />
+              <span className="text-[#0d0d0d]">{selectedMember.name}</span>
               {selectedMember.specialization && (
                 <span
                   className={`px-2 py-0.5 text-xs rounded-full ${getSpecializationBadgeColor(
@@ -305,7 +305,7 @@ export default function EmployeeAssignmentDropdown({
               )}
             </>
           ) : (
-            <span className="text-gray-500 dark:text-gray-400">Unassigned</span>
+            <span className="text-[#404040]">Unassigned</span>
           )}
         </span>
         {selectedMember && (
@@ -315,7 +315,7 @@ export default function EmployeeAssignmentDropdown({
               e.stopPropagation()
               handleClear()
             }}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-[#404040] hover:text-[#0d0d0d] transition-colors"
           >
             ×
           </button>
@@ -324,18 +324,18 @@ export default function EmployeeAssignmentDropdown({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-96 overflow-hidden flex flex-col">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-[#d9d9d9] rounded-card shadow-xl max-h-96 overflow-hidden flex flex-col">
           {/* AI Suggestion Button */}
           {showAISuggestion &&
             (userRole === ROLES.PM || userRole === ROLES.ADMIN) &&
             taskTitle &&
             taskDescription && (
-              <div className="border-b border-gray-200 dark:border-gray-700 p-2">
+              <div className="border-b border-[#d9d9d9] p-2">
                 <button
                   type="button"
                   onClick={fetchAISuggestions}
                   disabled={loadingSuggestions}
-                  className="w-full px-3 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                  className="w-full px-3 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm font-medium shadow-soft"
                 >
                   {loadingSuggestions ? (
                     <>
@@ -354,14 +354,14 @@ export default function EmployeeAssignmentDropdown({
 
           {/* AI Suggestions Display */}
           {showAISuggestions && suggestions && suggestions.recommendations.length > 0 && (
-            <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-purple-50 dark:bg-purple-900/20">
+            <div className="border-b border-[#d9d9d9] p-3 bg-[#a855f7] bg-opacity-5">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <span className="text-sm font-semibold text-purple-900 dark:text-purple-200">
+                <Sparkles className="w-4 h-4 text-[#a855f7]" />
+                <span className="text-sm font-semibold text-[#0d0d0d]">
                   AI Recommendations
                 </span>
                 {suggestions.requiredSpecialization && (
-                  <span className="text-xs text-purple-700 dark:text-purple-300">
+                  <span className="text-xs text-[#404040]">
                     ({suggestions.requiredSpecialization} preferred)
                   </span>
                 )}
@@ -374,34 +374,34 @@ export default function EmployeeAssignmentDropdown({
                   return (
                     <div
                       key={rec.engineerId}
-                      className="p-2 bg-white dark:bg-gray-800 rounded border border-purple-200 dark:border-purple-800 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                      className="p-2 bg-white rounded-card-inner border border-[#d9d9d9] cursor-pointer hover:bg-[#f5f5f5] transition-colors"
                       onClick={() => handleSelect(rec.engineerId)}
                     >
                       <div className="flex items-start justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                          <span className="text-xs font-semibold text-[#a855f7]">
                             #{index + 1}
                           </span>
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          <span className="text-sm font-medium text-[#0d0d0d]">
                             {rec.engineerName}
                           </span>
-                          <span className="text-xs text-purple-600 dark:text-purple-400">
+                          <span className="text-xs text-[#a855f7]">
                             {rec.confidenceScore}% confidence
                           </span>
                         </div>
                         {value === rec.engineerId && (
-                          <Check className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <Check className="w-4 h-4 text-[#a855f7]" />
                         )}
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-xs text-[#404040] mb-2">
                         {rec.reasoning}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-3 text-xs text-[#404040]">
                         <span
                           className={
                             rec.matchFactors.specializationMatch
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-gray-400'
+                              ? 'text-green-600'
+                              : 'text-[#404040] opacity-50'
                           }
                         >
                           ✓ Specialization Match
@@ -409,8 +409,8 @@ export default function EmployeeAssignmentDropdown({
                         <span
                           className={
                             rec.matchFactors.workloadSuitable
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-gray-400'
+                              ? 'text-green-600'
+                              : 'text-[#404040] opacity-50'
                           }
                         >
                           ✓ Workload Suitable
@@ -418,8 +418,8 @@ export default function EmployeeAssignmentDropdown({
                         <span
                           className={
                             rec.matchFactors.pastExperience
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-gray-400'
+                              ? 'text-green-600'
+                              : 'text-[#404040] opacity-50'
                           }
                         >
                           ✓ Past Experience
@@ -432,7 +432,7 @@ export default function EmployeeAssignmentDropdown({
               <button
                 type="button"
                 onClick={() => setShowAISuggestions(false)}
-                className="mt-2 text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200"
+                className="mt-2 text-xs text-[#a855f7] hover:text-[#9333ea] transition-colors"
               >
                 Hide suggestions
               </button>
@@ -440,15 +440,15 @@ export default function EmployeeAssignmentDropdown({
           )}
 
           {/* Search Bar */}
-          <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-2 border-b border-[#d9d9d9]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#404040]" />
               <input
                 type="text"
                 placeholder="Search by name, email, specialization..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-[#d9d9d9] rounded-card-inner focus:ring-2 focus:ring-[#a855f7] focus:border-transparent bg-white text-[#0d0d0d] text-sm"
               />
             </div>
           </div>
@@ -456,23 +456,23 @@ export default function EmployeeAssignmentDropdown({
           {/* Members List */}
           <div className="flex-1 overflow-y-auto max-h-64">
             {filteredMembers.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+              <div className="p-4 text-center text-[#404040] text-sm">
                 No team members found
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-[#d9d9d9]">
                 {filteredMembers.map((member) => (
                   <div
                     key={member.id}
-                    className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                      value === member.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    className={`p-3 hover:bg-[#f5f5f5] cursor-pointer transition-colors ${
+                      value === member.id ? 'bg-[#a855f7] bg-opacity-5' : ''
                     }`}
                     onClick={() => handleSelect(member.id)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-gray-900 dark:text-white">
+                          <span className="font-medium text-[#0d0d0d]">
                             {member.name}
                           </span>
                           <span
@@ -492,13 +492,13 @@ export default function EmployeeAssignmentDropdown({
                             </span>
                           )}
                           {member.isOnVacation && (
-                            <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 flex items-center gap-1">
+                            <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               Vacation
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        <p className="text-xs text-[#404040] mb-2">
                           {member.email}
                         </p>
                         <div className="flex items-center gap-4 text-xs">
@@ -517,7 +517,7 @@ export default function EmployeeAssignmentDropdown({
                         </div>
                       </div>
                       {value === member.id && (
-                        <Check className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <Check className="w-5 h-5 text-[#a855f7] flex-shrink-0" />
                       )}
                     </div>
                   </div>

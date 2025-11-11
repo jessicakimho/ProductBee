@@ -9,7 +9,7 @@ import { useTeamMembers } from '@/hooks/useTeamMembers'
 import EmployeeAssignmentDropdown from './EmployeeAssignmentDropdown'
 import FeedbackThread from '../feedback/FeedbackThread'
 import TicketAlignmentCheck from './TicketAlignmentCheck'
-import type { FeatureResponse, FeedbackResponse, ProjectResponse } from '@/types'
+import type { FeatureResponse, FeedbackResponse, ProjectResponse, TicketAlignmentResponse } from '@/types'
 
 interface FeatureModalProps {
   isOpen: boolean
@@ -48,6 +48,8 @@ export default function FeatureModal({
   const [comment, setComment] = useState('')
   const [proposal, setProposal] = useState('')
   const [activeTab, setActiveTab] = useState<'comment' | 'proposal'>('comment')
+  // Store alignment data per feature ID using a Map-like structure
+  const [alignmentDataMap, setAlignmentDataMap] = useState<Map<string, TicketAlignmentResponse>>(new Map())
   const { createFeedback, approveFeedback, rejectFeedback, isSubmitting } = useFeedback()
   const { updateFeature, isUpdating } = useFeature()
   const { members } = useTeamMembers()
@@ -62,17 +64,37 @@ export default function FeatureModal({
     ? members.find((m) => m.id === feature.assignedTo)
     : null
 
+  // Get alignment data for current feature
+  const currentFeatureId = feature?._id || feature?.id
+  const alignmentData = currentFeatureId ? alignmentDataMap.get(currentFeatureId) || null : null
+
+  // Handler to update alignment data for a specific feature
+  const handleAlignmentDataChange = (data: TicketAlignmentResponse | null) => {
+    if (currentFeatureId) {
+      setAlignmentDataMap((prev) => {
+        const newMap = new Map(prev)
+        if (data) {
+          newMap.set(currentFeatureId, data)
+        } else {
+          newMap.delete(currentFeatureId)
+        }
+        return newMap
+      })
+    }
+  }
+
   useEffect(() => {
     if (!isOpen) {
       setComment('')
       setProposal('')
       setActiveTab('comment')
+      // Don't clear alignmentDataMap - keep it so alignment data persists per feature
     }
   }, [isOpen])
 
   if (!isOpen || !feature) return null
 
-  const handleSubmitFeedback = async (type: 'comment' | 'proposal') => {
+  const handleSubmitFeedback = async (type: 'comment' | 'timeline_proposal') => {
     const content = type === 'comment' ? comment : proposal
     if (!content.trim()) {
       return
@@ -210,6 +232,8 @@ export default function FeatureModal({
               <TicketAlignmentCheck
                 projectId={project.id || project._id}
                 ticketId={feature._id || feature.id}
+                alignmentData={alignmentData}
+                onAlignmentDataChange={handleAlignmentDataChange}
               />
             </div>
           )}
@@ -282,7 +306,7 @@ export default function FeatureModal({
                   placeholder="Describe your proposal for timeline changes, feature modifications, etc..."
                 />
                 <button
-                  onClick={() => handleSubmitFeedback('proposal')}
+                  onClick={() => handleSubmitFeedback('timeline_proposal')}
                   disabled={isSubmitting || !proposal.trim()}
                   className="flex items-center gap-2 px-4 py-2 bg-[#a855f7] text-white rounded-full hover:bg-[#9333ea] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-soft"
                 >
