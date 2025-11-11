@@ -8,11 +8,19 @@ import { APIErrors } from './api/errors'
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
-if (!GEMINI_API_KEY) {
-  throw new Error('Please define the GEMINI_API_KEY environment variable inside .env.local')
-}
+// Initialize genAI lazily to avoid build-time errors if env var is missing
+// The error will be thrown when the API is actually called
+let genAI: GoogleGenerativeAI | null = null
 
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+function getGenAI(): GoogleGenerativeAI {
+  if (!GEMINI_API_KEY) {
+    throw new Error('Please define the GEMINI_API_KEY environment variable')
+  }
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
+  }
+  return genAI
+}
 
 /**
  * Get Gemini model instance
@@ -20,7 +28,7 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
  * gemini-2.0-flash-lite now
  */
 function getModel(modelName: string = 'gemini-2.0-flash-lite') {
-  return genAI.getGenerativeModel({ model: modelName })
+  return getGenAI().getGenerativeModel({ model: modelName })
 }
 
 /**

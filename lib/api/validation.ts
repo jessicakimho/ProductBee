@@ -174,13 +174,20 @@ export function statusToDb(apiStatus: string): string {
  * Convert DB status to API status using constants
  */
 export function statusToApi(dbStatus: string): 'not_started' | 'in_progress' | 'blocked' | 'complete' {
-  const mapping: Record<string, 'not_started' | 'in_progress' | 'blocked' | 'complete'> = {
+  // Use explicit type mapping to ensure literal types are preserved
+  const mapping: {
+    [DB_FEATURE_STATUS.BACKLOG]: typeof FEATURE_STATUS.NOT_STARTED
+    [DB_FEATURE_STATUS.ACTIVE]: typeof FEATURE_STATUS.IN_PROGRESS
+    [DB_FEATURE_STATUS.BLOCKED]: typeof FEATURE_STATUS.BLOCKED
+    [DB_FEATURE_STATUS.COMPLETE]: typeof FEATURE_STATUS.COMPLETE
+  } = {
     [DB_FEATURE_STATUS.BACKLOG]: FEATURE_STATUS.NOT_STARTED,
     [DB_FEATURE_STATUS.ACTIVE]: FEATURE_STATUS.IN_PROGRESS,
     [DB_FEATURE_STATUS.BLOCKED]: FEATURE_STATUS.BLOCKED,
     [DB_FEATURE_STATUS.COMPLETE]: FEATURE_STATUS.COMPLETE,
   }
-  return mapping[dbStatus] || FEATURE_STATUS.NOT_STARTED
+  const result = mapping[dbStatus as keyof typeof mapping]
+  return (result || FEATURE_STATUS.NOT_STARTED) as 'not_started' | 'in_progress' | 'blocked' | 'complete'
 }
 
 /**
