@@ -54,7 +54,7 @@ export function validateEmail(email: string): void {
  * Validate role
  */
 export function validateRole(role: string): void {
-  const validRoles = Object.values(ROLES)
+  const validRoles = Object.values(ROLES) as string[]
   if (!validRoles.includes(role)) {
     throw APIErrors.badRequest(`Invalid role. Must be one of: ${validRoles.join(', ')}`)
   }
@@ -67,7 +67,7 @@ export function validateSpecialization(specialization: string | null | undefined
   if (specialization === null || specialization === undefined) {
     return // null/undefined is valid (not all users have specialization)
   }
-  const validSpecializations = Object.values(SPECIALIZATIONS)
+  const validSpecializations = Object.values(SPECIALIZATIONS) as string[]
   if (!validSpecializations.includes(specialization)) {
     throw APIErrors.badRequest(`Invalid specialization. Must be one of: ${validSpecializations.join(', ')}`)
   }
@@ -148,8 +148,8 @@ export function priorityToDb(apiPriority: string): string {
 /**
  * Convert DB priority to API priority using constants
  */
-export function priorityToApi(dbPriority: string): string {
-  const mapping: Record<string, string> = {
+export function priorityToApi(dbPriority: string): 'critical' | 'high' | 'medium' | 'low' {
+  const mapping: Record<string, 'critical' | 'high' | 'medium' | 'low'> = {
     [DB_PRIORITY_LEVELS.P0]: PRIORITY_LEVELS.CRITICAL,
     [DB_PRIORITY_LEVELS.P1]: PRIORITY_LEVELS.HIGH,
     [DB_PRIORITY_LEVELS.P2]: PRIORITY_LEVELS.MEDIUM,
@@ -173,8 +173,8 @@ export function statusToDb(apiStatus: string): string {
 /**
  * Convert DB status to API status using constants
  */
-export function statusToApi(dbStatus: string): string {
-  const mapping: Record<string, string> = {
+export function statusToApi(dbStatus: string): 'not_started' | 'in_progress' | 'blocked' | 'complete' {
+  const mapping: Record<string, 'not_started' | 'in_progress' | 'blocked' | 'complete'> = {
     [DB_FEATURE_STATUS.BACKLOG]: FEATURE_STATUS.NOT_STARTED,
     [DB_FEATURE_STATUS.ACTIVE]: FEATURE_STATUS.IN_PROGRESS,
     [DB_FEATURE_STATUS.BLOCKED]: FEATURE_STATUS.BLOCKED,
@@ -242,7 +242,7 @@ export function validateTicketType(ticketType: string | null | undefined): void 
   if (ticketType === null || ticketType === undefined) {
     return // null/undefined is valid (defaults to 'feature')
   }
-  const validTypes = Object.values(TICKET_TYPES)
+  const validTypes = Object.values(TICKET_TYPES) as string[]
   if (!validTypes.includes(ticketType)) {
     throw APIErrors.badRequest(`Invalid ticket type. Must be one of: ${validTypes.join(', ')}`)
   }

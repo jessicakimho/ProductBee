@@ -15,8 +15,8 @@
 3. **Connect your Git repository**
 4. **Configure**:
    - Build command: `npm run build`
-   - Base directory: `ProductBee` (if repo root is hackUTD-25)
-   - Publish directory: (leave empty)
+   - Base directory: **Leave EMPTY** (ProductBee is the repository root)
+   - Publish directory: **Leave EMPTY** (Netlify Next.js plugin handles this)
 5. **Set Environment Variables** (see below)
 6. **Deploy**
 

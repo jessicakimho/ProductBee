@@ -1,6 +1,7 @@
 [build]
   command = "npm run build"
-  # Netlify Next.js plugin handles the publish directory automatically
+  # Base directory should be empty if ProductBee is the repository root
+  # If your repo structure is different, adjust accordingly
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

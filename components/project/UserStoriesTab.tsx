@@ -48,21 +48,18 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
     return features.filter((ticket) => linkedIds.includes(ticket.id) || linkedIds.includes(ticket._id))
   }
 
-  const handleCreateUserStory = async (data: CreateUserStoryRequest) => {
-    // projectId is optional - user stories are now global
-    await createUserStory(data)
-    setIsFormOpen(false)
+  const handleSubmitUserStory = async (data: CreateUserStoryRequest | UpdateUserStoryRequest) => {
+    if (editingUserStory) {
+      // Update existing user story
+      await updateUserStory(editingUserStory.id || editingUserStory._id, data as UpdateUserStoryRequest)
+      setEditingUserStory(null)
+    } else {
+      // Create new user story
+      await createUserStory(data as CreateUserStoryRequest)
+      setIsFormOpen(false)
+    }
     // Refresh user stories
     await fetchUserStories()
-  }
-
-  const handleUpdateUserStory = async (data: UpdateUserStoryRequest) => {
-    if (editingUserStory) {
-      await updateUserStory(editingUserStory.id || editingUserStory._id, data)
-      setEditingUserStory(null)
-      // Refresh user stories
-      await fetchUserStories()
-    }
   }
 
   const handleDeleteUserStory = async (userStoryId: string) => {
@@ -186,7 +183,7 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
         onClose={handleFormClose}
         projectId={projectId} // Optional - for backward compatibility
         userStory={editingUserStory}
-        onSubmit={editingUserStory ? handleUpdateUserStory : handleCreateUserStory}
+        onSubmit={handleSubmitUserStory}
         isSubmitting={isCreating || isUpdating}
       />
     </div>

@@ -31,10 +31,9 @@ Make sure your code is pushed to a Git repository (GitHub, GitLab, or Bitbucket)
 4. **Configure Build Settings**:
    - **Build command**: `npm run build`
    - **Publish directory**: Leave empty (Netlify Next.js plugin handles this automatically)
-   - **Base directory**: 
-     - If your repository root is `hackUTD-25` and ProductBee is a subdirectory, set this to `ProductBee`
-     - If ProductBee is your repository root, leave this empty
-   - **Node version**: Set to `20` (or ensure it's in your `package.json` engines field)
+   - **Base directory**: **Leave EMPTY** (ProductBee is the repository root)
+     - ⚠️ **IMPORTANT**: If you see "Base directory does not exist" error, make sure this field is empty, not set to "ProductBee"
+   - **Node version**: Set to `20` (configured in netlify.toml)
 5. **Netlify Next.js Plugin**: The plugin will be automatically detected and installed from `netlify.toml`
 6. **Set Environment Variables**: See the Environment Variables section below
 7. **Deploy**: Click "Deploy site"

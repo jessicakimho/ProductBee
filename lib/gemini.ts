@@ -47,7 +47,7 @@ export async function generateRoadmap(projectName: string, projectDescription: s
     const response = await result.response
     
     // Check if response was blocked
-    if (response.blockedReason) {
+    if ('blockedReason' in response && response.blockedReason) {
       throw new Error(`Response was blocked: ${response.blockedReason}`)
     }
     
@@ -149,7 +149,7 @@ export async function suggestAssignment(input: AssignmentSuggestionInput) {
     const response = await result.response
     
     // Check if response was blocked
-    if (response.blockedReason) {
+    if ('blockedReason' in response && response.blockedReason) {
       throw new Error(`Response was blocked: ${response.blockedReason}`)
     }
     
@@ -208,7 +208,7 @@ export async function checkTicketAlignment(input: AlignmentCheckInput) {
     const response = await result.response
     
     // Check if response was blocked
-    if (response.blockedReason) {
+    if ('blockedReason' in response && response.blockedReason) {
       throw new Error(`Response was blocked: ${response.blockedReason}`)
     }
     
