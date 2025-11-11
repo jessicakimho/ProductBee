@@ -73,8 +73,13 @@ function validateAuth0Env(): void {
         // Debug logging to see what's actually being read
         if (process.env.NETLIFY || process.env.NODE_ENV === 'production') {
           console.log(`[AUTH0_DEBUG] ${key} length: ${trimmedValue.length}`)
+          console.log(`[AUTH0_DEBUG] ${key} raw length: ${value.length}`)
           console.log(`[AUTH0_DEBUG] ${key} first 10 chars: ${trimmedValue.substring(0, 10)}...`)
           console.log(`[AUTH0_DEBUG] ${key} last 10 chars: ...${trimmedValue.substring(trimmedValue.length - 10)}`)
+          console.log(`[AUTH0_DEBUG] Has newline: ${value.includes('\n')}`)
+          console.log(`[AUTH0_DEBUG] Has quotes: ${value.includes('"') || value.includes("'")}`)
+          console.log(`[AUTH0_DEBUG] NETLIFY env: ${process.env.NETLIFY}`)
+          console.log(`[AUTH0_DEBUG] NODE_ENV: ${process.env.NODE_ENV}`)
         }
         if (trimmedValue.length < 32) {
           issues.push(
