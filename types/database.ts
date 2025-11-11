@@ -51,34 +51,8 @@ export interface DatabaseFeedback {
   account_id: string
   type: 'comment' | 'proposal'
   content: string
-  proposed_roadmap?: Record<string, unknown> | null
+  proposed_roadmap?: any
   ai_analysis?: string
   status: 'pending' | 'approved' | 'rejected'
-  created_at: string
-}
-
-export interface DatabaseUserStory {
-  id: string
-  project_id: string
-  account_id: string
-  name: string
-  role: string
-  goal: string
-  benefit: string
-  demographics?: {
-    age?: string
-    location?: string
-    technical_skill?: string
-    [key: string]: string | number | null | undefined
-  } | null
-  created_by: string
-  created_at: string
-  updated_at: string
-}
-
-export interface DatabaseTicketUserStory {
-  ticket_id: string
-  user_story_id: string
-  account_id: string
   created_at: string
 }

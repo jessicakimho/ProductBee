@@ -2,40 +2,36 @@ import { createServerClient } from '@/lib/supabase'
 import { APIErrors } from './errors'
 import { ROLES, Role } from '@/lib/constants'
 import type { User } from '@/models/User'
-import type { Session } from '@auth0/nextjs-auth0'
 
 /**
  * Extract accountId from Auth0 session metadata
  * Checks app_metadata first, then user_metadata, then falls back to a default
  */
-export function extractAccountIdFromSession(session: Session | null | undefined): string {
+export function extractAccountIdFromSession(session: any): string {
   if (!session || !session.user) {
     throw APIErrors.unauthorized()
   }
 
-  const user = session.user as { sub?: string; email?: string; org_id?: string; app_metadata?: { account_id?: string }; user_metadata?: { account_id?: string } }
-
   // Try app_metadata first (preferred for organization/account data)
-  if (user.app_metadata?.account_id) {
-    return user.app_metadata.account_id
+  if (session.user.app_metadata?.account_id) {
+    return session.user.app_metadata.account_id
   }
 
   // Try user_metadata as fallback
-  if (user.user_metadata?.account_id) {
-    return user.user_metadata.account_id
+  if (session.user.user_metadata?.account_id) {
+    return session.user.user_metadata.account_id
   }
 
   // Try organization claim (if using Auth0 Organizations)
-  if (user.org_id) {
-    return user.org_id
+  if (session.user.org_id) {
+    return session.user.org_id
   }
 
   // Fallback: use auth0_id as account_id for single-tenant users
   // In production, you might want to throw an error instead
   // For now, we'll use a default account_id based on the domain or sub
   // This allows the system to work even if accountId isn't set in Auth0
-  const sub = user.sub || ''
-  const accountId = sub.split('|')[0] + '|' + (user.email?.split('@')[1] || 'default')
+  const accountId = session.user.sub.split('|')[0] + '|' + (session.user.email?.split('@')[1] || 'default')
   
   return accountId
 }
@@ -45,7 +41,7 @@ export function extractAccountIdFromSession(session: Session | null | undefined)
  * Returns user from database or throws error
  * Extracts accountId from Auth0 metadata and ensures user has accountId
  */
-export async function getUserFromSession(session: Session | null | undefined): Promise<User> {
+export async function getUserFromSession(session: any): Promise<User> {
   if (!session || !session.user) {
     throw APIErrors.unauthorized()
   }
@@ -53,27 +49,21 @@ export async function getUserFromSession(session: Session | null | undefined): P
   const supabase = createServerClient()
   const accountId = extractAccountIdFromSession(session)
 
-  const userSub = (session.user as { sub?: string }).sub
-  if (!userSub) {
-    throw APIErrors.unauthorized()
-  }
-
   // Get or create user
   let { data: user, error: userError } = await supabase
     .from('users')
     .select('*')
-    .eq('auth0_id', userSub)
+    .eq('auth0_id', session.user.sub)
     .single()
 
   if (userError && userError.code === 'PGRST116') {
     // User doesn't exist, create it with accountId
-    const sessionUser = session.user as { sub?: string; name?: string; email?: string }
     const { data: newUser, error: createError } = await supabase
       .from('users')
       .insert({
-        auth0_id: userSub,
-        name: sessionUser.name || sessionUser.email || 'Unknown',
-        email: sessionUser.email || '',
+        auth0_id: session.user.sub,
+        name: session.user.name || session.user.email || 'Unknown',
+        email: session.user.email || '',
         role: 'viewer',
         account_id: accountId,
       })

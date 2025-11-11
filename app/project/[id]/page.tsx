@@ -1,11 +1,9 @@
 import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
-import DashboardClient from '@/components/dashboard/DashboardClient'
+import ProjectDetailClient from '@/components/project/ProjectDetailClient'
 import { createServerClient } from '@/lib/supabase'
 import { getUserFromSession, canViewProject } from '@/lib/api/permissions'
-import { feedbackTypeToApi } from '@/lib/api/validation'
-import type { GetProjectResponse, FeatureResponse, FeedbackResponse, ProjectResponse } from '@/types'
-import type { DatabaseFeedback } from '@/types/database'
+import type { GetProjectResponse, FeatureResponse, FeedbackResponse } from '@/types'
 
 async function getProjectData(id: string, accountId: string) {
   try {
@@ -51,7 +49,13 @@ async function getProjectData(id: string, accountId: string) {
     // Get feedback for this project, filtered by account_id
     const { data: feedback, error: feedbackError } = await supabase
       .from('feedback')
-      .select('*')
+      .select(`
+        *,
+        user_id:users!feedback_user_id_fkey (
+          name,
+          email
+        )
+      `)
       .eq('project_id', id)
       .eq('account_id', accountId)
       .order('created_at', { ascending: false })
@@ -61,31 +65,9 @@ async function getProjectData(id: string, accountId: string) {
       return null
     }
 
-    // Get unique user IDs from feedback
-    const userIds = [...new Set(feedback?.map((fb: { user_id: string }) => fb.user_id).filter(Boolean) || [])]
-    
-    // Fetch user data for all feedback creators
-    let users: Array<{ id: string; name: string; email: string }> = []
-    if (userIds.length > 0) {
-      const { data: userData, error: usersError } = await supabase
-        .from('users')
-        .select('id, name, email')
-        .in('id', userIds)
-        .eq('account_id', accountId)
-      
-      if (!usersError && userData) {
-        users = userData
-      }
-    }
-
-    // Create a map of user IDs to user data
-    const userMap = new Map(
-      (users || []).map((u: { id: string; name: string; email: string }) => [u.id, { _id: u.id, name: u.name, email: u.email }])
-    )
-
     // Group feedback by feature
     const feedbackByFeature: Record<string, FeedbackResponse[]> = {}
-    feedback?.forEach((fb: DatabaseFeedback) => {
+    feedback?.forEach((fb: any) => {
       const featureId = fb.feature_id
       if (!feedbackByFeature[featureId]) {
         feedbackByFeature[featureId] = []
@@ -95,8 +77,12 @@ async function getProjectData(id: string, accountId: string) {
         id: fb.id,
         projectId: fb.project_id,
         featureId: fb.feature_id,
-        userId: fb.user_id ? (userMap.get(fb.user_id) || null) : null,
-        type: feedbackTypeToApi(fb.type), // Convert DB -> API
+        userId: fb.user_id ? {
+          _id: fb.user_id.id,
+          name: fb.user_id.name,
+          email: fb.user_id.email,
+        } : null,
+        type: fb.type,
         content: fb.content,
         proposedRoadmap: fb.proposed_roadmap,
         aiAnalysis: fb.ai_analysis,
@@ -170,17 +156,17 @@ export default async function ProjectPage({
   const canView = await canViewProject(user, params.id)
   if (!canView) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#0d0d0d] mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Access Denied
           </h1>
-          <p className="text-[#404040] mb-4">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             You do not have access to this project.
           </p>
           <a
             href="/dashboard"
-            className="text-[#a855f7] hover:underline"
+            className="text-blue-600 hover:text-blue-700"
           >
             Return to Dashboard
           </a>
@@ -193,14 +179,14 @@ export default async function ProjectPage({
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#0d0d0d] mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Project Not Found
           </h1>
           <a
             href="/dashboard"
-            className="text-[#a855f7] hover:underline"
+            className="text-blue-600 hover:text-blue-700"
           >
             Return to Dashboard
           </a>
@@ -209,40 +195,6 @@ export default async function ProjectPage({
     )
   }
 
-  // Also fetch all projects for the dashboard
-  const supabase = createServerClient()
-  const { data: projectsData } = await supabase
-    .from('projects')
-    .select(`
-      *,
-      created_by:users!projects_created_by_fkey (
-        name,
-        email
-      )
-    `)
-    .eq('account_id', user.account_id)
-    .order('created_at', { ascending: false })
-
-  const projects: ProjectResponse[] = (projectsData?.map((project: { id: string; name: string; description: string; roadmap: { summary: string; riskLevel: string }; created_at: string; created_by?: { name: string; email: string } | null }): ProjectResponse => ({
-    _id: project.id,
-    id: project.id,
-    name: project.name,
-    description: project.description,
-    roadmap: project.roadmap,
-    createdAt: project.created_at,
-    createdBy: project.created_by ? {
-      name: project.created_by.name,
-      email: project.created_by.email,
-    } : null,
-  })) || [])
-
-  return (
-    <DashboardClient 
-      projects={projects}
-      userRole={user.role}
-      initialProjectId={params.id}
-      initialProjectData={data}
-    />
-  )
+  return <ProjectDetailClient projectData={data} userRole={user.role} />
 }
 

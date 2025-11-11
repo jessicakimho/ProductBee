@@ -8,7 +8,7 @@ import type { Feedback } from '@/models/Feedback'
 import type { User } from '@/models/User'
 
 // API Response wrapper
-export interface APIResponse<T = unknown> {
+export interface APIResponse<T = any> {
   success: boolean
   data?: T
   error?: string
@@ -29,7 +29,6 @@ export interface ProjectResponse {
   roadmap: {
     summary: string
     riskLevel: string
-    imageUrl?: string
   }
   createdAt: string
   createdBy?: {
@@ -150,15 +149,12 @@ export interface UpdateFeatureResponse {
 }
 
 // Feedback API Types
-// Roadmap data can be any JSON-serializable object
-export type RoadmapData = Record<string, unknown> | null
-
 export interface CreateFeedbackRequest {
   projectId: string
   featureId: string
   type: 'comment' | 'timeline_proposal'
   content: string
-  proposedRoadmap?: RoadmapData
+  proposedRoadmap?: any
 }
 
 export interface FeedbackResponse {
@@ -173,7 +169,7 @@ export interface FeedbackResponse {
   } | null
   type: string
   content: string
-  proposedRoadmap?: RoadmapData
+  proposedRoadmap?: any
   aiAnalysis?: string
   status: string
   createdAt: string
@@ -358,7 +354,7 @@ export interface UserStoryResponse {
     age?: string
     location?: string
     technical_skill?: string
-    [key: string]: string | number | null | undefined
+    [key: string]: any
   } | null
   createdBy: {
     _id: string
@@ -380,7 +376,7 @@ export interface CreateUserStoryRequest {
     age?: string
     location?: string
     technical_skill?: string
-    [key: string]: string | number | null | undefined
+    [key: string]: any
   } | null
 }
 
@@ -397,7 +393,7 @@ export interface UpdateUserStoryRequest {
     age?: string
     location?: string
     technical_skill?: string
-    [key: string]: string | number | null | undefined
+    [key: string]: any
   } | null
 }
 

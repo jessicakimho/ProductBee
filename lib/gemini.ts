@@ -8,7 +8,7 @@ import { APIErrors } from './api/errors'
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
-// Initialize genAI lazily to avoid build-time errors if env var is missing
+// Lazy initialization to avoid build-time errors
 // The error will be thrown when the API is actually called
 let genAI: GoogleGenerativeAI | null = null
 
@@ -55,7 +55,7 @@ export async function generateRoadmap(projectName: string, projectDescription: s
     const response = await result.response
     
     // Check if response was blocked
-    if ('blockedReason' in response && response.blockedReason) {
+    if (response.blockedReason) {
       throw new Error(`Response was blocked: ${response.blockedReason}`)
     }
     
@@ -124,7 +124,7 @@ export async function analyzeProposal(proposalContent: string, originalRoadmap: 
  * Compare original roadmap with proposed roadmap
  * Returns array of changed features
  */
-export async function compareRoadmaps(originalRoadmap: Record<string, unknown>, proposedRoadmap: Record<string, unknown>) {
+export async function compareRoadmaps(originalRoadmap: any, proposedRoadmap: any) {
   try {
     const model = getModel()
     const prompt = getRoadmapComparisonPrompt({
@@ -157,7 +157,7 @@ export async function suggestAssignment(input: AssignmentSuggestionInput) {
     const response = await result.response
     
     // Check if response was blocked
-    if ('blockedReason' in response && response.blockedReason) {
+    if (response.blockedReason) {
       throw new Error(`Response was blocked: ${response.blockedReason}`)
     }
     
@@ -201,7 +201,7 @@ export async function suggestAssignment(input: AssignmentSuggestionInput) {
 }
 
 /**
- * Check ticket alignment with user stories
+ * Check ticket alignment with user stories using AI
  * Phase 11.5: User Stories & Personas
  */
 export async function checkTicketAlignment(input: AlignmentCheckInput) {
@@ -209,14 +209,14 @@ export async function checkTicketAlignment(input: AlignmentCheckInput) {
     const model = getModel()
     const prompt = getAlignmentCheckPrompt(input)
     
-    console.log('[Gemini] Checking ticket alignment for ticket:', input.ticketTitle)
+    console.log('[Gemini] Checking ticket alignment for:', input.ticketTitle)
     console.log('[Gemini] User stories count:', input.userStories.length)
     
     const result = await model.generateContent(prompt)
     const response = await result.response
     
     // Check if response was blocked
-    if ('blockedReason' in response && response.blockedReason) {
+    if (response.blockedReason) {
       throw new Error(`Response was blocked: ${response.blockedReason}`)
     }
     

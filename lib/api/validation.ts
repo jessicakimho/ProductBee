@@ -31,7 +31,7 @@ export function validateUUID(id: string, fieldName: string = 'ID'): void {
  * Validate required fields in an object
  */
 export function validateRequired(
-  data: Record<string, unknown>,
+  data: Record<string, any>,
   fields: string[]
 ): void {
   const missing = fields.filter((field) => !data[field] && data[field] !== 0)
@@ -54,7 +54,7 @@ export function validateEmail(email: string): void {
  * Validate role
  */
 export function validateRole(role: string): void {
-  const validRoles = Object.values(ROLES) as string[]
+  const validRoles = Object.values(ROLES)
   if (!validRoles.includes(role)) {
     throw APIErrors.badRequest(`Invalid role. Must be one of: ${validRoles.join(', ')}`)
   }
@@ -67,7 +67,7 @@ export function validateSpecialization(specialization: string | null | undefined
   if (specialization === null || specialization === undefined) {
     return // null/undefined is valid (not all users have specialization)
   }
-  const validSpecializations = Object.values(SPECIALIZATIONS) as string[]
+  const validSpecializations = Object.values(SPECIALIZATIONS)
   if (!validSpecializations.includes(specialization)) {
     throw APIErrors.badRequest(`Invalid specialization. Must be one of: ${validSpecializations.join(', ')}`)
   }
@@ -148,8 +148,8 @@ export function priorityToDb(apiPriority: string): string {
 /**
  * Convert DB priority to API priority using constants
  */
-export function priorityToApi(dbPriority: string): 'critical' | 'high' | 'medium' | 'low' {
-  const mapping: Record<string, 'critical' | 'high' | 'medium' | 'low'> = {
+export function priorityToApi(dbPriority: string): string {
+  const mapping: Record<string, string> = {
     [DB_PRIORITY_LEVELS.P0]: PRIORITY_LEVELS.CRITICAL,
     [DB_PRIORITY_LEVELS.P1]: PRIORITY_LEVELS.HIGH,
     [DB_PRIORITY_LEVELS.P2]: PRIORITY_LEVELS.MEDIUM,
@@ -173,21 +173,14 @@ export function statusToDb(apiStatus: string): string {
 /**
  * Convert DB status to API status using constants
  */
-export function statusToApi(dbStatus: string): 'not_started' | 'in_progress' | 'blocked' | 'complete' {
-  // Use explicit type mapping to ensure literal types are preserved
-  const mapping: {
-    [DB_FEATURE_STATUS.BACKLOG]: typeof FEATURE_STATUS.NOT_STARTED
-    [DB_FEATURE_STATUS.ACTIVE]: typeof FEATURE_STATUS.IN_PROGRESS
-    [DB_FEATURE_STATUS.BLOCKED]: typeof FEATURE_STATUS.BLOCKED
-    [DB_FEATURE_STATUS.COMPLETE]: typeof FEATURE_STATUS.COMPLETE
-  } = {
+export function statusToApi(dbStatus: string): string {
+  const mapping: Record<string, string> = {
     [DB_FEATURE_STATUS.BACKLOG]: FEATURE_STATUS.NOT_STARTED,
     [DB_FEATURE_STATUS.ACTIVE]: FEATURE_STATUS.IN_PROGRESS,
     [DB_FEATURE_STATUS.BLOCKED]: FEATURE_STATUS.BLOCKED,
     [DB_FEATURE_STATUS.COMPLETE]: FEATURE_STATUS.COMPLETE,
   }
-  const result = mapping[dbStatus as keyof typeof mapping]
-  return (result || FEATURE_STATUS.NOT_STARTED) as 'not_started' | 'in_progress' | 'blocked' | 'complete'
+  return mapping[dbStatus] || FEATURE_STATUS.NOT_STARTED
 }
 
 /**
@@ -249,7 +242,7 @@ export function validateTicketType(ticketType: string | null | undefined): void 
   if (ticketType === null || ticketType === undefined) {
     return // null/undefined is valid (defaults to 'feature')
   }
-  const validTypes = Object.values(TICKET_TYPES) as string[]
+  const validTypes = Object.values(TICKET_TYPES)
   if (!validTypes.includes(ticketType)) {
     throw APIErrors.badRequest(`Invalid ticket type. Must be one of: ${validTypes.join(', ')}`)
   }
@@ -289,16 +282,6 @@ export function validateLabels(labels: string[] | null | undefined): void {
  */
 export function sanitizeString(input: string): string {
   return input.trim().replace(/[<>]/g, '')
-}
-
-/**
- * Validate pending change status (Phase 12)
- */
-export function validatePendingChangeStatus(status: string): void {
-  const validStatuses = Object.values(PENDING_CHANGE_STATUS)
-  if (!validStatuses.includes(status as any)) {
-    throw APIErrors.badRequest(`Invalid pending change status. Must be one of: ${validStatuses.join(', ')}`)
-  }
 }
 
 /**
@@ -343,6 +326,16 @@ export function validateUserStory(data: Record<string, unknown>): void {
   
   if (data.demographics !== undefined) {
     validateUserStoryDemographics(data.demographics)
+  }
+}
+
+/**
+ * Validate pending change status (Phase 12)
+ */
+export function validatePendingChangeStatus(status: string): void {
+  const validStatuses = Object.values(PENDING_CHANGE_STATUS)
+  if (!validStatuses.includes(status as any)) {
+    throw APIErrors.badRequest(`Invalid pending change status. Must be one of: ${validStatuses.join(', ')}`)
   }
 }
 
