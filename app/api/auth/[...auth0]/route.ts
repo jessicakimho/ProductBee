@@ -22,8 +22,9 @@ import { getAuth0BaseURL } from '@/lib/auth0-config'
  */
 export const GET = handleAuth({
   login: handleLogin({
-    // Use normalized base URL for returnTo to ensure consistent redirects
-    returnTo: getAuth0BaseURL() + '/dashboard',
+    // Redirect to intermediate callback page first to prevent redirect loops
+    // The callback page will add a buffer before redirecting to dashboard
+    returnTo: getAuth0BaseURL() + '/auth-callback',
   }),
   logout: handleLogout({
     // Use normalized base URL for returnTo
