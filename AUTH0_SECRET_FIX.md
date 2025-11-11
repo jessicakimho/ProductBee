@@ -8,9 +8,19 @@ Your build logs show:
   - AUTH0_SECRET is too short (20 chars). It should be at least 32 characters.
 ```
 
-**This is likely causing your authentication hanging issue!**
+**This is causing your authentication issues!**
 
-When `AUTH0_SECRET` is too short, Auth0 cannot properly encrypt/decrypt session cookies. This means:
+You're seeing:
+- `400 Bad Request` error on `/api/auth/callback`
+- Authentication hanging on `/auth-callback`
+- Session not being established
+
+When `AUTH0_SECRET` is too short, Auth0 cannot properly encrypt/decrypt:
+- **State parameter** - Used to prevent CSRF attacks, encrypted in the login URL
+- **Session cookies** - Used to store the authenticated session
+
+This causes:
+- **400 Bad Request** - Auth0 can't decrypt the state parameter, rejects the callback
 - Session cookies may not be set correctly
 - Session cookies may not be readable
 - The `useUser()` hook can't detect the session
