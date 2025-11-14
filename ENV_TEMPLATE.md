@@ -56,3 +56,53 @@ See `lib/auth0-config.ts` for detailed styling instructions.
 2. Create a new API key
 3. Copy to `.env.local`
 
+## Vercel Deployment
+
+### Setting Environment Variables in Vercel
+
+1. Go to your Vercel project dashboard
+2. Navigate to Settings → Environment Variables
+3. Add each environment variable:
+   - **Key:** Variable name (e.g., `AUTH0_SECRET`)
+   - **Value:** Variable value
+   - **Environment:** Select Production, Preview, and/or Development
+
+### Production Environment Variables
+
+For production deployment, use these values:
+
+```env
+# Auth0 Configuration (Production)
+AUTH0_SECRET=<generate with: openssl rand -hex 32>
+AUTH0_BASE_URL=https://your-app.vercel.app
+AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
+AUTH0_CLIENT_ID=your-auth0-client-id
+AUTH0_CLIENT_SECRET=your-auth0-client-secret
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Google Gemini API
+GEMINI_API_KEY=your-gemini-api-key-here
+```
+
+**Important:** 
+- Replace `https://your-app.vercel.app` with your actual Vercel deployment URL
+- Update Auth0 application settings with production callback/logout URLs (see architecture docs)
+- Generate a new `AUTH0_SECRET` for production (never reuse development secrets)
+
+### Auth0 Production Setup
+
+After deploying to Vercel:
+
+1. **Update Auth0 Application Settings:**
+   - Go to Auth0 Dashboard → Applications → Your App
+   - Add production callback URL: `https://your-app.vercel.app/api/auth/callback`
+   - Add production logout URL: `https://your-app.vercel.app`
+   - Add production web origin: `https://your-app.vercel.app`
+
+2. **Update Vercel Environment Variables:**
+   - Set `AUTH0_BASE_URL` to your production URL
+   - Redeploy if needed for changes to take effect
+

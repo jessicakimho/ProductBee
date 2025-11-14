@@ -1,5 +1,6 @@
 import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
+import { headers, cookies } from 'next/headers'
 import { getUserFromSession } from '@/lib/api/permissions'
 import OnboardingForm from '@/components/onboarding/OnboardingForm'
 import { ROLES } from '@/lib/constants'
@@ -9,7 +10,11 @@ import { ROLES } from '@/lib/constants'
  * Redirects users who already have a non-viewer role, or allows them to set their role
  */
 export default async function OnboardingPage() {
-  const session = await getSession()
+  const headersList = await headers()
+  const cookiesList = await cookies()
+  const session = await getSession({ 
+    req: { headers: headersList, cookies: cookiesList } as any 
+  })
   
   if (!session) {
     redirect('/api/auth/login')

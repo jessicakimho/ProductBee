@@ -66,6 +66,14 @@ All endpoints enforce account isolation:
 | `POST /api/feature/:id/approve-status-change` | ❌ | ❌ | ✅ | ✅ |
 | `POST /api/feature/:id/reject-status-change` | ❌ | ❌ | ✅ | ✅ |
 | `GET /api/project/:id/pending-changes` | ✅ | ✅ | ✅ | ✅ |
+| `GET /api/user-story` | ✅ | ✅ | ✅ | ✅ |
+| `POST /api/user-story` | ❌ | ❌ | ✅ | ✅ |
+| `PUT /api/user-story/:id` | ❌ | ❌ | ✅ | ✅ |
+| `DELETE /api/user-story/:id` | ❌ | ❌ | ✅ | ✅ |
+| `GET /api/user-story/project/:id` | ✅ | ✅ | ✅ | ✅ |
+| `POST /api/feature/:id/assign-user-story` | ❌ | ❌ | ✅ | ✅ |
+| `DELETE /api/feature/:id/assign-user-story` | ❌ | ❌ | ✅ | ✅ |
+| `POST /api/feature/:id/check-alignment` | ✅ | ✅ | ✅ | ✅ |
 
 ## Database vs API Format Conversions
 
@@ -1043,9 +1051,60 @@ Returns all pending status changes for features in a project. Used for notificat
 
 # User Stories & Personas (Phase 11.5)
 
+User stories are **global** (account-scoped) and can optionally be associated with a project. The `projectId` field is optional for backwards compatibility.
+
+## GET `/api/user-story`
+
+Get all user stories for the account (global, not project-scoped).
+
+**Permissions:** All authenticated users
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userStories": [
+      {
+        "_id": "uuid",
+        "id": "uuid",
+        "projectId": "uuid",
+        "name": "As a customer",
+        "role": "I want to reset my password",
+        "goal": "So that I can regain access to my account",
+        "benefit": "Reduces support tickets and improves user experience",
+        "demographics": {
+          "age": "25-45",
+          "location": "North America",
+          "technical_skill": "intermediate"
+        },
+        "createdBy": {
+          "_id": "user-uuid",
+          "name": "John Doe",
+          "email": "john@example.com"
+        },
+        "createdAt": "2024-01-01T00:00:00Z",
+        "updatedAt": null,
+        "linkedTicketIds": ["ticket-uuid-1", "ticket-uuid-2"]
+      }
+    ]
+  }
+}
+```
+
+**Notes:**
+- Returns all user stories for the user's account (global scope)
+- `projectId` may be `null` for global user stories
+- Ordered by creation date (newest first)
+- Includes linked ticket IDs for each user story
+
+**Error Responses:**
+- `401 UNAUTHORIZED` - Not authenticated
+- `500 INTERNAL_ERROR` - Database error
+
 ## POST `/api/user-story`
 
-Create a new user story for a project.
+Create a new user story (global, optionally associated with a project).
 
 **Permissions:** PMs and Admins only
 
@@ -1066,7 +1125,7 @@ Create a new user story for a project.
 ```
 
 **Validation:**
-- `projectId` (required) - Valid UUID, must belong to user's account
+- `projectId` (optional) - Valid UUID, must belong to user's account if provided. If omitted, creates a global user story.
 - `name` (required) - Non-empty string
 - `role` (required) - Non-empty string
 - `goal` (required) - Non-empty string
@@ -1106,8 +1165,8 @@ Create a new user story for a project.
 
 **Error Responses:**
 - `401 UNAUTHORIZED` - Not authenticated
-- `403 FORBIDDEN` - Not PM or Admin, or project not accessible
-- `404 NOT_FOUND` - Project not found
+- `403 FORBIDDEN` - Not PM or Admin, or project not accessible (if projectId provided)
+- `404 NOT_FOUND` - Project not found (if projectId provided)
 - `400 BAD_REQUEST` - Invalid request data (missing required fields, invalid project ID)
 - `500 INTERNAL_ERROR` - Database error
 
@@ -1205,7 +1264,7 @@ Delete a user story. Also removes all ticket-user story links.
 
 ## GET `/api/user-story/project/:id`
 
-Get all user stories for a project.
+Get all user stories for a specific project. Note: User stories are global, but this endpoint filters by project for convenience.
 
 **Parameters:**
 - `id` (path) - Project UUID
@@ -1275,8 +1334,8 @@ Link a user story to a ticket (feature).
 
 **Validation:**
 - `userStoryId` (required) - Valid UUID
-- User story must belong to the same project as the ticket
 - User story and ticket must belong to user's account
+- Note: User stories are global, so project matching is not required
 
 **Response:**
 ```json
@@ -1294,7 +1353,7 @@ Link a user story to a ticket (feature).
 - `401 UNAUTHORIZED` - Not authenticated
 - `403 FORBIDDEN` - Not PM or Admin, or ticket/user story not accessible
 - `404 NOT_FOUND` - Ticket or user story not found
-- `400 BAD_REQUEST` - User story belongs to different project, or link already exists
+- `400 BAD_REQUEST` - Invalid request data or link already exists
 - `500 INTERNAL_ERROR` - Database error
 
 ## DELETE `/api/feature/:id/assign-user-story`
@@ -1511,7 +1570,7 @@ Same as `UserProfileResponse` but includes:
 {
   _id: string
   id: string
-  projectId: string
+  projectId: string | null  // Optional - user stories are global
   name: string
   role: string
   goal: string
@@ -1563,7 +1622,6 @@ The application uses Supabase Realtime for live updates. When data changes in th
 - `projects` - Project list updates
 - `features` - Feature status/assignment changes
 - `feedback` - New feedback and status changes
-- `pending_changes` - Pending status change proposals and approvals (Phase 12)
-- `user_stories` - User story creation, updates, and deletion (Phase 11.5)
-- `ticket_user_story` - Ticket-user story link changes (Phase 11.5)
+
+**Note:** While `pending_changes`, `user_stories`, and `ticket_user_story` are enabled for real-time in the schema, they are not currently subscribed to in the frontend. Real-time subscriptions can be added for these tables if needed in the future.
 

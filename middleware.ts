@@ -11,6 +11,7 @@ export const config = {
     '/api/roadmap/:path*',
     '/api/feedback/:path*',
     '/api/feature/:path*',
+    '/api/user-story/:path*',
   ],
 }
 

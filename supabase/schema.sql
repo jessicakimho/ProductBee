@@ -1,18 +1,12 @@
 -- ProductBee Database Schema for Supabase
 -- Run this SQL in your Supabase SQL Editor
 --
--- MIGRATION NOTES:
--- If you have an existing database, you'll need to add account_id columns:
--- 1. ALTER TABLE users ADD COLUMN account_id TEXT;
--- 2. ALTER TABLE projects ADD COLUMN account_id TEXT;
--- 3. ALTER TABLE features ADD COLUMN account_id TEXT;
--- 4. ALTER TABLE feedback ADD COLUMN account_id TEXT;
--- 5. Update existing records with account_id values (based on your migration strategy)
--- 6. ALTER TABLE users ALTER COLUMN account_id SET NOT NULL;
--- 7. ALTER TABLE projects ALTER COLUMN account_id SET NOT NULL;
--- 8. ALTER TABLE features ALTER COLUMN account_id SET NOT NULL;
--- 9. ALTER TABLE feedback ALTER COLUMN account_id SET NOT NULL;
--- 10. Create indexes as shown below
+-- This schema includes all tables, indexes, and real-time configuration
+-- for the ProductBee application.
+
+-- ============================================================================
+-- TABLES
+-- ============================================================================
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -40,7 +34,7 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Features table
+-- Features table (tickets)
 CREATE TABLE IF NOT EXISTS features (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
@@ -51,14 +45,14 @@ CREATE TABLE IF NOT EXISTS features (
   priority TEXT CHECK (priority IN ('P0', 'P1', 'P2')) NOT NULL,
   effort_estimate_weeks INTEGER NOT NULL,
   depends_on UUID[] DEFAULT '{}',
-  -- Jira-style fields (Phase 6)
+  -- Jira-style fields
   assigned_to UUID REFERENCES users(id) ON DELETE SET NULL,
   reporter UUID REFERENCES users(id) ON DELETE SET NULL,
   story_points INTEGER,
   labels TEXT[] DEFAULT '{}',
   acceptance_criteria TEXT,
   ticket_type TEXT CHECK (ticket_type IN ('feature', 'bug', 'epic', 'story')) DEFAULT 'feature',
-  -- Timeline fields (Phase 7)
+  -- Timeline fields
   start_date DATE,
   end_date DATE,
   duration INTEGER, -- Duration in days
@@ -80,7 +74,7 @@ CREATE TABLE IF NOT EXISTS feedback (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Pending changes table (Phase 12: Drag-and-Drop with Two-Way Confirmation)
+-- Pending changes table (for drag-and-drop status change proposals)
 CREATE TABLE IF NOT EXISTS pending_changes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   feature_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
@@ -93,10 +87,10 @@ CREATE TABLE IF NOT EXISTS pending_changes (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- User stories table (Phase 11.5: User Stories & Personas)
+-- User stories table (global, account-scoped, optionally project-linked)
 CREATE TABLE IF NOT EXISTS user_stories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  project_id UUID REFERENCES projects(id) ON DELETE SET NULL, -- Nullable for global user stories
   account_id TEXT NOT NULL,
   name TEXT NOT NULL,
   role TEXT NOT NULL,
@@ -108,7 +102,7 @@ CREATE TABLE IF NOT EXISTS user_stories (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Ticket-User Story join table (Phase 11.5: User Stories & Personas)
+-- Ticket-User Story join table (many-to-many relationship)
 CREATE TABLE IF NOT EXISTS ticket_user_story (
   ticket_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
   user_story_id UUID NOT NULL REFERENCES user_stories(id) ON DELETE CASCADE,
@@ -117,13 +111,21 @@ CREATE TABLE IF NOT EXISTS ticket_user_story (
   PRIMARY KEY (ticket_id, user_story_id)
 );
 
--- Indexes for performance
+-- ============================================================================
+-- INDEXES
+-- ============================================================================
+
+-- Users indexes
 CREATE INDEX IF NOT EXISTS idx_users_auth0_id ON users(auth0_id);
 CREATE INDEX IF NOT EXISTS idx_users_account_id ON users(account_id);
 CREATE INDEX IF NOT EXISTS idx_users_specialization ON users(specialization);
 CREATE INDEX IF NOT EXISTS idx_users_vacation_dates ON users USING GIN (vacation_dates);
+
+-- Projects indexes
 CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
 CREATE INDEX IF NOT EXISTS idx_projects_account_id ON projects(account_id);
+
+-- Features indexes
 CREATE INDEX IF NOT EXISTS idx_features_project_id ON features(project_id);
 CREATE INDEX IF NOT EXISTS idx_features_account_id ON features(account_id);
 CREATE INDEX IF NOT EXISTS idx_features_status ON features(status);
@@ -133,21 +135,33 @@ CREATE INDEX IF NOT EXISTS idx_features_ticket_type ON features(ticket_type);
 CREATE INDEX IF NOT EXISTS idx_features_labels ON features USING GIN (labels);
 CREATE INDEX IF NOT EXISTS idx_features_start_date ON features(start_date);
 CREATE INDEX IF NOT EXISTS idx_features_end_date ON features(end_date);
+
+-- Feedback indexes
 CREATE INDEX IF NOT EXISTS idx_feedback_project_id ON feedback(project_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_feature_id ON feedback(feature_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_account_id ON feedback(account_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status);
+
+-- Pending changes indexes
 CREATE INDEX IF NOT EXISTS idx_pending_changes_feature_id ON pending_changes(feature_id);
 CREATE INDEX IF NOT EXISTS idx_pending_changes_account_id ON pending_changes(account_id);
 CREATE INDEX IF NOT EXISTS idx_pending_changes_proposed_by ON pending_changes(proposed_by);
 CREATE INDEX IF NOT EXISTS idx_pending_changes_status ON pending_changes(status);
 CREATE INDEX IF NOT EXISTS idx_pending_changes_created_at ON pending_changes(created_at);
+
+-- User stories indexes
 CREATE INDEX IF NOT EXISTS idx_user_stories_project_id ON user_stories(project_id);
 CREATE INDEX IF NOT EXISTS idx_user_stories_account_id ON user_stories(account_id);
 CREATE INDEX IF NOT EXISTS idx_user_stories_created_by ON user_stories(created_by);
+
+-- Ticket-User Story join table indexes
 CREATE INDEX IF NOT EXISTS idx_ticket_user_story_ticket_id ON ticket_user_story(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_ticket_user_story_user_story_id ON ticket_user_story(user_story_id);
 CREATE INDEX IF NOT EXISTS idx_ticket_user_story_account_id ON ticket_user_story(account_id);
+
+-- ============================================================================
+-- REAL-TIME CONFIGURATION
+-- ============================================================================
 
 -- Enable real-time for tables (requires Supabase Realtime to be enabled)
 -- Note: You may need to enable Realtime in your Supabase project settings
@@ -158,11 +172,22 @@ ALTER PUBLICATION supabase_realtime ADD TABLE pending_changes;
 ALTER PUBLICATION supabase_realtime ADD TABLE user_stories;
 ALTER PUBLICATION supabase_realtime ADD TABLE ticket_user_story;
 
--- Row Level Security (RLS) Policies
--- Note: Since we're using Auth0, we'll disable RLS for now and handle authorization in the API layer
--- You can enable RLS later if you migrate to Supabase Auth or implement custom JWT verification
+-- ============================================================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================================================
 
--- For now, disable RLS to allow API access (authorization handled in Next.js API routes)
+-- RLS is disabled because authorization is handled in the Next.js API layer.
+-- This approach provides:
+-- 1. Centralized authorization logic in API routes
+-- 2. Account isolation via account_id filtering
+-- 3. Role-based permissions via permission helpers
+-- 4. No need for complex JWT verification in Supabase
+--
+-- All database queries filter by account_id (enforced in API routes).
+-- Permission checks are handled in Next.js middleware and API routes.
+-- Auth0 session management provides secure authentication.
+-- API layer provides defense-in-depth authorization.
+
 ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
 ALTER TABLE features DISABLE ROW LEVEL SECURITY;
@@ -170,9 +195,3 @@ ALTER TABLE feedback DISABLE ROW LEVEL SECURITY;
 ALTER TABLE pending_changes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE user_stories DISABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_user_story DISABLE ROW LEVEL SECURITY;
-
--- If you want to enable RLS later with Auth0 integration, you would need to:
--- 1. Create a function to verify Auth0 JWT tokens
--- 2. Create policies that check user roles from the users table
--- 3. Use service role key in API routes for authenticated operations
-

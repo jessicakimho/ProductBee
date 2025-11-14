@@ -1,5 +1,6 @@
 import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
+import { headers, cookies } from 'next/headers'
 import DashboardClient from '@/components/dashboard/DashboardClient'
 import { createServerClient } from '@/lib/supabase'
 import { getUserFromSession } from '@/lib/api/permissions'
@@ -48,7 +49,11 @@ async function getProjects(accountId: string) {
 }
 
 export default async function DashboardPage() {
-  const session = await getSession()
+  const headersList = await headers()
+  const cookiesList = await cookies()
+  const session = await getSession({ 
+    req: { headers: headersList, cookies: cookiesList } as any 
+  })
   
   if (!session) {
     redirect('/api/auth/login')
