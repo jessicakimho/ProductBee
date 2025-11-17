@@ -136,7 +136,7 @@ export default function GanttView({ features, onTaskClick }: GanttViewProps) {
           viewMode={ViewMode.Month}
           locale="en-US"
           onDateChange={() => {}} // Read-only for now
-          onTaskDelete={() => {}} // Read-only for now
+          onDelete={() => {}} // Read-only for now
           onProgressChange={() => {}} // Read-only for now
           onDoubleClick={handleTaskClick}
           onClick={handleTaskClick}

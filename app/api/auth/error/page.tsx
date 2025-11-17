@@ -1,20 +1,17 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { AlertCircle, Home } from 'lucide-react'
 
 /**
- * Auth0 Error Page
+ * Auth0 Error Page Content
  * 
- * This page is displayed when Auth0 authentication encounters an error.
- * Common errors include:
- * - access_denied: User denied authorization
- * - login_required: User needs to log in
- * - invalid_request: Invalid request parameters
+ * This component uses useSearchParams() which requires a Suspense boundary
  */
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -126,6 +123,30 @@ export default function AuthErrorPage() {
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Auth0 Error Page
+ * 
+ * This page is displayed when Auth0 authentication encounters an error.
+ * Common errors include:
+ * - access_denied: User denied authorization
+ * - login_required: User needs to log in
+ * - invalid_request: Invalid request parameters
+ */
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f5f5f5] dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#a855f7] mx-auto mb-4"></div>
+          <p className="text-[#404040] dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }
 

@@ -1,6 +1,5 @@
 import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
-import { headers, cookies } from 'next/headers'
 import { getUserFromSession } from '@/lib/api/permissions'
 import TeamMembersList from '@/components/team/TeamMembersList'
 
@@ -9,11 +8,7 @@ import TeamMembersList from '@/components/team/TeamMembersList'
  * Displays all team members in the current account
  */
 export default async function TeamPage() {
-  const headersList = await headers()
-  const cookiesList = await cookies()
-  const session = await getSession({ 
-    req: { headers: headersList, cookies: cookiesList } as any 
-  })
+  const session = await getSession()
   
   if (!session) {
     redirect('/api/auth/login')

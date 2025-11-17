@@ -243,7 +243,7 @@ export function calculateCriticalPath(features: Feature[]): CriticalPath | null 
     earliestStart.set(featureId, earliestStartTime)
 
     // Calculate earliest end
-    const duration = feature.calculatedDuration || feature.estimated_effort_weeks * 7 || 7
+    const duration = feature.calculatedDuration || (feature.estimated_effort_weeks ?? 0) * 7 || 7
     const earliestEndTime = earliestStartTime + duration
     earliestEnd.set(featureId, earliestEndTime)
 
@@ -300,7 +300,7 @@ export function calculateCriticalPath(features: Feature[]): CriticalPath | null 
       for (const dependentId of featureDependents) {
         const depStart = calculateLatestTimes(dependentId)
         const depFeature = featureMap.get(dependentId)
-        const depDuration = depFeature?.calculatedDuration || depFeature?.estimated_effort_weeks * 7 || 7
+        const depDuration = depFeature?.calculatedDuration || (depFeature?.estimated_effort_weeks ?? 0) * 7 || 7
         latestEndTime = Math.min(latestEndTime, depStart - depDuration)
       }
     }
@@ -308,7 +308,7 @@ export function calculateCriticalPath(features: Feature[]): CriticalPath | null 
     latestEnd.set(featureId, latestEndTime)
 
     // Calculate latest start
-    const duration = feature.calculatedDuration || feature.estimated_effort_weeks * 7 || 7
+    const duration = feature.calculatedDuration || (feature.estimated_effort_weeks ?? 0) * 7 || 7
     const latestStartTime = latestEndTime - duration
     latestStart.set(featureId, latestStartTime)
 

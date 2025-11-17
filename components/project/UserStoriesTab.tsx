@@ -65,6 +65,15 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
     }
   }
 
+  // Wrapper function to handle union type for form submission
+  const handleFormSubmit = async (data: CreateUserStoryRequest | UpdateUserStoryRequest) => {
+    if (editingUserStory) {
+      await handleUpdateUserStory(data as UpdateUserStoryRequest)
+    } else {
+      await handleCreateUserStory(data as CreateUserStoryRequest)
+    }
+  }
+
   const handleDeleteUserStory = async (userStoryId: string) => {
     if (confirm('Are you sure you want to delete this user story? This will unlink it from all tickets.')) {
       setDeletingUserStoryId(userStoryId)
@@ -186,7 +195,7 @@ export default function UserStoriesTab({ projectId, userRole, features }: UserSt
         onClose={handleFormClose}
         projectId={projectId} // Optional - for backward compatibility
         userStory={editingUserStory}
-        onSubmit={editingUserStory ? handleUpdateUserStory : handleCreateUserStory}
+        onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
       />
     </div>

@@ -46,9 +46,10 @@ export async function generateRoadmap(projectName: string, projectDescription: s
     const result = await model.generateContent(prompt)
     const response = await result.response
     
-    // Check if response was blocked
-    if (response.blockedReason) {
-      throw new Error(`Response was blocked: ${response.blockedReason}`)
+    // Check if response was blocked (use type assertion since blockedReason may exist at runtime)
+    const blockedReason = (response as any).blockedReason
+    if (blockedReason) {
+      throw new Error(`Response was blocked: ${blockedReason}`)
     }
     
     const text = response.text()
@@ -148,9 +149,10 @@ export async function suggestAssignment(input: AssignmentSuggestionInput) {
     const result = await model.generateContent(prompt)
     const response = await result.response
     
-    // Check if response was blocked
-    if (response.blockedReason) {
-      throw new Error(`Response was blocked: ${response.blockedReason}`)
+    // Check if response was blocked (use type assertion since blockedReason may exist at runtime)
+    const blockedReason = (response as any).blockedReason
+    if (blockedReason) {
+      throw new Error(`Response was blocked: ${blockedReason}`)
     }
     
     const text = response.text()
@@ -207,9 +209,10 @@ export async function checkTicketAlignment(input: AlignmentCheckInput) {
     const result = await model.generateContent(prompt)
     const response = await result.response
     
-    // Check if response was blocked
-    if (response.blockedReason) {
-      throw new Error(`Response was blocked: ${response.blockedReason}`)
+    // Check if response was blocked (use type assertion since blockedReason may exist at runtime)
+    const blockedReason = (response as any).blockedReason
+    if (blockedReason) {
+      throw new Error(`Response was blocked: ${blockedReason}`)
     }
     
     const text = response.text()

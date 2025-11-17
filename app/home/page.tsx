@@ -1,6 +1,5 @@
 import { getSession } from '@auth0/nextjs-auth0'
 import { redirect } from 'next/navigation'
-import { headers, cookies } from 'next/headers'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -11,13 +10,8 @@ import Image from 'next/image'
  * Authenticated users are automatically redirected to /dashboard.
  */
 export default async function HomePage() {
-  const headersList = await headers()
-  const cookiesList = await cookies()
-  
   // Check if user is already authenticated
-  const session = await getSession({ 
-    req: { headers: headersList, cookies: cookiesList } as any 
-  })
+  const session = await getSession()
   
   // If user is already authenticated, redirect to dashboard
   if (session) {
